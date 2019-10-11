@@ -1,0 +1,29 @@
+general:
+  seed: 0
+
+path:
+  dimacs_dir: ./data/train/dimacs
+  out_dir: ./data/train/pickle
+  train_dir: ./data/train/pickle
+  val_dir: ./data/val/pickle
+  test_dir: ./data/test/pickle
+  logs_tensorboard : ./runs/test_1
+
+generate_data:
+  do_it: No
+  n_pairs: 20 # nombre de données de train
+  min_n: 10 #loi uniforme pour le nombre de varible : nombre min
+  max_n: 50 #loi uniforme pour le nombre de varible : nombre min
+  max_nodes_per_batch: 60000 #We batched multiple problems together,
+                            #with each batch containingup to XXX nodes (i.e.literals plus clauses)
+  one: 0 # ?
+  p_k_2: 0.3 # parametre pour loi bernouilli selon rmq 2 partie 4 (1-0.7 = 0.3)
+  p_geo: 0.4 # parametre pour loi geometric selon rmq 2 partie 4
+
+training:
+  n_epochs: 10
+  embbeding_dim: 128
+  T : 2
+  final_reducer: mean #min, mean, sum, max
+  weight_decay: 0.0000000001
+  lr: 0.0001

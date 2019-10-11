@@ -1,0 +1,7 @@
+.idea/
+config/config.yaml
+data/
+PyMiniSolvers/
+runs/
+src/__pycache__/
+utils/__pycache__/
