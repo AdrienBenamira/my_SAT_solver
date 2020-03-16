@@ -293,7 +293,7 @@ import imageio
 def plot_for_offset(X2,n_batches, n_vars_per_batch, d, batch, key_acp, solutions):
 
 
-    L = np.reshape(X2, [2 * n_batches, n_vars_per_batch, d])
+    L = np.reshape(X2.cpu(), [2 * n_batches, n_vars_per_batch, d])
     L = np.concatenate([L[batch, :, :], L[n_batches + batch, :, :]], axis=0)
 
     X = L
