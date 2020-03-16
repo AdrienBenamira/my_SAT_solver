@@ -85,8 +85,8 @@ test_problems_loader = ProblemsLoader([args.test_dir + "/" + f for f in os.listd
 dataloaders = {'train': train_problems_loader, 'val': val_problems_loader, 'test': test_problems_loader,}
 
 model = NeuroSAT(args, device)
-model.to(device)
 model = nn.DataParallel(model)
+model.to(device)
 criterion = nn.BCELoss().to(device)
 optimizer = torch.optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
 
