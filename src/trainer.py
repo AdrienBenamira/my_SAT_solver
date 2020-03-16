@@ -54,7 +54,7 @@ def train_model(path, writer, model, dataloaders, criterion, optimizer,device, n
                 # track history if only in train
                 with torch.set_grad_enabled(phase == 'train'):
                     outputs = model(problem)
-                    target = torch.Tensor(problem.is_sat).float().to(model.L_init.weight.device)
+                    target = torch.Tensor(problem.is_sat).float()
                     # print(outputs.shape, target.shape)
                     # print(outputs, target)
                     outputs = sigmoid(outputs)
