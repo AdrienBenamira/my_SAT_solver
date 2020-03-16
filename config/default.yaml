@@ -5,10 +5,11 @@ general:
 path:
   dimacs_dir: ./data/val/dimacs
   out_dir: ./data/val/pickle
-  train_dir: ./data/train/pickle
+  train_dir: ./data/petit_train/pickle
   val_dir: ./data/val/pickle
   test_dir: ./data/test/pickle
   logs_tensorboard : ./runs/test_1
+  model: ./runs/test_1test/2020_03_16_15_59_01_297781/0.538135_best.pth.tar
 
 generate_data:
   do_it: No
@@ -27,3 +28,5 @@ training:
   T : 26
   weight_decay: 0.0000000001
   lr: 0.00002
+  sparse: no
+  l1weight: 0.001

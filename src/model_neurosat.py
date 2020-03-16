@@ -8,6 +8,8 @@ import numpy as np
 from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
 
+
+
 class MLP(nn.Module):
   def __init__(self, in_dim, hidden_dim, out_dim):
     super(MLP, self).__init__()
@@ -22,14 +24,33 @@ class MLP(nn.Module):
 
     return x
 
+import torch
+from torch.autograd import Function
+
+class L1Penalty(Function):
+
+    @staticmethod
+    def forward(ctx, input, l1weight):
+        ctx.save_for_backward(input)
+        ctx.l1weight = l1weight
+        return input
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        input, = ctx.saved_variables
+        grad_input = input.clone().sign().mul(1)
+        grad_input += grad_output
+        return grad_input, None
+
 
 class NeuroSAT(nn.Module):
     def __init__(self, args):
         super(NeuroSAT, self).__init__()
         self.args = args
         
-        d = self.args.training.embbeding_dim
+        d = self.args.embbeding_dim
         self.d = d
+        self.l1weight = args.l1weight
 
         self.init_ts = torch.ones(1)
         self.init_ts.requires_grad = False
@@ -60,11 +81,15 @@ class NeuroSAT(nn.Module):
 
         ts_L_unpack_indices = torch.Tensor(problem.L_unpack_indices).t().long()
 
+
+
         init_ts = self.init_ts
         # 1 x n_lits x dim & 1 x n_clauses x dim
         L_init = self.L_init(init_ts).view(1, 1, -1)
         # print(L_init.shape)
         L_init = L_init.repeat(1, n_lits, 1)
+        moitie = int(n_lits/2)
+        L_init[:,:moitie,:] = -L_init[:,:moitie,:]
         C_init = self.C_init(init_ts).view(1, 1, -1)
         # print(C_init.shape)
         C_init = C_init.repeat(1, n_clauses, 1)
@@ -79,9 +104,9 @@ class NeuroSAT(nn.Module):
         # print(ts_L_unpack_indices.shape)
 
         #
-        self.acp_dico = {str(index_T): None for index_T in range(self.args.training.T)}
+        self.acp_dico = {str(index_T): None for index_T in range(self.args.T)}
 
-        for index_T in range(self.args.training.T):
+        for index_T in range(self.args.T):
             # n_lits x dim
             L_hidden = L_state[0].squeeze(0)
             L_pre_msg = self.L_msg(L_hidden)
@@ -106,9 +131,20 @@ class NeuroSAT(nn.Module):
             if str(index_T) in self.acp_dico.keys():
                 self.acp_dico[str(index_T)] = L_state[0].squeeze(0)
 
+            logits = L_state[0].squeeze(0)
+            clauses = C_state[0].squeeze(0)
 
-        logits = L_state[0].squeeze(0)
-        clauses = C_state[0].squeeze(0)
+            if self.args.sparse:
+
+                logits = L1Penalty.apply(logits, self.l1weight)
+                #clauses = L1Penalty.apply(clauses, self.l1weight)
+
+        if not self.args.sparse:
+            logits = L_state[0].squeeze(0)
+            #clauses = C_state[0].squeeze(0)
+
+        #logits = L1Penalty.apply(logits, self.l1weight)
+        #clauses = L1Penalty.apply(clauses, self.l1weight)
 
         # print(logits.shape, clauses.shape)
 
@@ -275,8 +311,8 @@ def plot_for_offset(X2,n_batches, n_vars_per_batch, d, batch, key_acp, solutions
     for color, i, target_name in zip(colors, [0, 1], target_names):
         ax.scatter(X_r[y == i, 0], X_r[y == i, 1], color=color, alpha=.8, lw=lw,
                     label=target_name)
-    ax.set_ylim(-0.15, 0.15)
-    ax.set_xlim(-0.8, 0.8)
+    ax.set_ylim(-10, 10)
+    ax.set_xlim(-10, 10)
     plt.legend(loc='best', shadow=False, scatterpoints=1)
     ax.set(xlabel='Composante 1', ylabel='Composante 2',
            title='PCA on L at time ' + str(key_acp) + " with answer : " + str(solutions[-1]))

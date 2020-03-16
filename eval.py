@@ -1,3 +1,5 @@
+from tqdm import tqdm
+
 from utils.config import Config
 import PyMiniSolvers.minisolvers as minisolvers
 import random
@@ -33,6 +35,7 @@ parser.add_argument("--train_dir", default=config.path.train_dir)
 parser.add_argument("--val_dir", default=config.path.val_dir)
 parser.add_argument("--test_dir", default=config.path.test_dir)
 parser.add_argument("--logs_tensorboard", default=config.path.logs_tensorboard)
+parser.add_argument("--model", default=config.path.model)
 
 parser.add_argument("--n_epochs", default=config.training.n_epochs, type=two_args_str_int)
 parser.add_argument("--embbeding_dim", default=config.training.embbeding_dim, type=two_args_str_int)
@@ -40,8 +43,6 @@ parser.add_argument("--weight_decay", default=config.training.weight_decay, type
 parser.add_argument("--lr", default=config.training.lr, type=two_args_str_int)
 parser.add_argument("--T", default=config.training.T, type=two_args_str_int)
 parser.add_argument("--sparse", default=config.training.sparse, type=str2bool, nargs='?', const=False)
-parser.add_argument("--l1weight", default=config.training.l1weight, type=two_args_str_int)
-
 
 
 args = parser.parse_args()
@@ -68,10 +69,7 @@ torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
 
 
-#Generation de données
-if args.do_it:
-    dg = DataGenerator(args, minisolvers)
-    dg.run_main()
+
 
 
 train_problems_loader = ProblemsLoader([args.train_dir + "/" + f for f in os.listdir(args.train_dir)])
@@ -80,7 +78,22 @@ test_problems_loader = ProblemsLoader([args.test_dir + "/" + f for f in os.listd
 dataloaders = {'train': train_problems_loader, 'val': val_problems_loader, 'test': test_problems_loader,}
 
 model = NeuroSAT(args)
-criterion = nn.BCELoss()
-optimizer = torch.optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
+net = torch.load(args.model)
+model.load_state_dict(net['state_dict'])
 
-best_model = train_model(path_save_model, writer, model, dataloaders, criterion, optimizer,device, num_epochs=args.n_epochs)
+model.eval()
+
+for situation in dataloaders.keys():
+    problems_test, train_filename = dataloaders["test"].get_next()
+    test_bar = tqdm(problems_test)
+    compteur = 0.0
+    total = 0.0
+    for _, problem in enumerate(test_bar):
+        solutions = model.find_solutions(problem, model, path_save_model)
+        for batch, solution in enumerate(solutions):
+            total += 1
+            if solution is not None:
+                print("[%s] %s" % (problem.dimacs[batch], str(solution)))
+                compteur +=1
+
+    print('Pourcentage pb solved variables: {:4f}'.format(compteur/total))
