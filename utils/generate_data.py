@@ -206,7 +206,7 @@ class DataGenerator(object):
             all_n_cells.append(sum([len(iclause) for iclause in iclauses]))
             all_dimacs.append(dimacs)
             offset += n_vars
-        print(all_iclauses, all_is_sat, all_n_cells, all_dimacs,offset )
+        #print(all_iclauses, all_is_sat, all_n_cells, all_dimacs,offset )
 
 
 
@@ -238,7 +238,7 @@ class DataGenerator(object):
         prev_n_vars = None
 
         for filename in filenames:
-            print(filename)
+            #print(filename)
             n_vars, iclauses = self.parse_dimacs("%s/%s" % (self.config.path.dimacs_dir, filename))
             n_clauses = len(iclauses)
             n_cells = sum([len(iclause) for iclause in iclauses])
