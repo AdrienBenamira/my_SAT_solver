@@ -19,7 +19,7 @@ parser = argparse.ArgumentParser()
 
 parser.add_argument("--seed", default=config.general.seed, type=two_args_str_int, choices=[0, 1, 2])
 parser.add_argument("--task_name", default=config.general.task_name)
-parser.add_argument("--seed", default=config.general.seed, type=two_args_str_int, choices=[0, 1, 2, 3])
+parser.add_argument("--device", default=config.general.device, type=two_args_str_int, choices=[0, 1, 2, 3])
 
 parser.add_argument("--do_it", default=config.generate_data.do_it, type=str2bool, nargs='?', const=False)
 parser.add_argument("--n_pairs", default=config.generate_data.n_pairs, type=two_args_str_int)
