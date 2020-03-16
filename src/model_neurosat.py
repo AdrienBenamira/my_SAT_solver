@@ -85,23 +85,23 @@ class NeuroSAT(nn.Module):
 
 
 
-        init_ts = self.init_ts.to(self.device)
+        init_ts = self.init_ts.to(self.L_init.weight.device)
         # 1 x n_lits x dim & 1 x n_clauses x dim
-        L_init = self.L_init(init_ts).view(1, 1, -1).to(self.device)
+        L_init = self.L_init(init_ts).view(1, 1, -1).to(self.L_init.weight.device)
         # print(L_init.shape)
         L_init = L_init.repeat(1, n_lits, 1)
         moitie = int(n_lits/2)
         L_init[:,:moitie,:] = -L_init[:,:moitie,:]
-        C_init = self.C_init(init_ts).view(1, 1, -1).to(self.device)
+        C_init = self.C_init(init_ts).view(1, 1, -1).to(self.L_init.weight.device)
         # print(C_init.shape)
         C_init = C_init.repeat(1, n_clauses, 1)
 
         # print(L_init.shape, C_init.shape)
 
-        L_state = (L_init, torch.zeros(1, n_lits, self.d).to(self.device))
-        C_state = (C_init, torch.zeros(1, n_clauses, self.d).to(self.device))
+        L_state = (L_init, torch.zeros(1, n_lits, self.d).to(self.L_init.weight.device))
+        C_state = (C_init, torch.zeros(1, n_clauses, self.d).to(self.L_init.weight.device))
         L_unpack = torch.sparse.FloatTensor(ts_L_unpack_indices, torch.ones(problem.n_cells),
-                                            torch.Size([n_lits, n_clauses])).to_dense().to(self.device)
+                                            torch.Size([n_lits, n_clauses])).to_dense().to(self.L_init.weight.device)
 
         # print(ts_L_unpack_indices.shape)
 
