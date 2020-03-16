@@ -1,6 +1,7 @@
 general:
   seed: 0
   task_name: test
+  device: 0
 
 path:
   dimacs_dir: ./data/val/dimacs
