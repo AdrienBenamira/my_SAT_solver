@@ -70,7 +70,7 @@ class NeuroSAT(nn.Module):
 
         self.denom = torch.sqrt(torch.Tensor([self.d]))
 
-        self.device = device
+        #self.device = device
 
 
 
