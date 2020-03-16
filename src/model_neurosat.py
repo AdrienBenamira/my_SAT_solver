@@ -207,7 +207,7 @@ class NeuroSAT(nn.Module):
 
                 else:
 
-                    L = np.reshape(final_lits, [2 * n_batches, n_vars_per_batch, self.d])
+                    L = np.reshape(final_lits.cpu(), [2 * n_batches, n_vars_per_batch, self.d])
                     L = np.concatenate([L[batch, :, :], L[n_batches + batch, :, :]], axis=0)
 
                     kmeans = KMeans(n_clusters=2, random_state=0).fit(L)
