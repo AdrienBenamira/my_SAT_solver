@@ -82,7 +82,7 @@ dataloaders = {'train': train_problems_loader, 'val': val_problems_loader, 'test
 
 model = NeuroSAT(args, device)
 model.to(device)
-criterion = nn.BCELoss()
+criterion = nn.BCELoss().to(device)
 optimizer = torch.optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
 
 best_model = train_model(path_save_model, writer, model, dataloaders, criterion, optimizer,device, num_epochs=args.n_epochs)

@@ -54,10 +54,11 @@ def train_model(path, writer, model, dataloaders, criterion, optimizer,device, n
                 # track history if only in train
                 with torch.set_grad_enabled(phase == 'train'):
                     outputs = model(problem)
-                    target = torch.Tensor(problem.is_sat).float()
+                    target = torch.Tensor(problem.is_sat).float().to(self.device)
                     # print(outputs.shape, target.shape)
                     # print(outputs, target)
                     outputs = sigmoid(outputs)
+
                     loss = criterion(outputs, target)
                     desc = 'loss: %.4f; ' % (loss.item())
 
