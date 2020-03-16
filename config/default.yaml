@@ -5,7 +5,7 @@ general:
 path:
   dimacs_dir: ./data/val/dimacs
   out_dir: ./data/val/pickle
-  train_dir: ./data/petit_train/pickle
+  train_dir: ./data/train/pickle
   val_dir: ./data/val/pickle
   test_dir: ./data/test/pickle
   logs_tensorboard : ./runs/test_1

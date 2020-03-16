@@ -135,14 +135,37 @@ def train_model(path, writer, model, dataloaders, criterion, optimizer,device, n
                 torch.save({'epoch': epoch + 1, 'acc': best_acc, 'state_dict': model.state_dict()},
                            os.path.join(path, str(best_acc) + '_best.pth.tar'))
 
+
         print()
+
+    problems_test, train_filename = dataloaders["test"].get_next()
 
     time_elapsed = time.time() - since
     print('Training complete in {:.0f}m {:.0f}s'.format(
         time_elapsed // 60, time_elapsed % 60))
     print('Best val Loss: {:4f}'.format(best_loss))
 
+
+    solve_pb(problems_test, model, path)
+
+
+
     # load best model weights
     model.load_state_dict(best_model_wts)
     #TODO : save
     return model
+
+def solve_pb(problems_test, g, path):
+    test_bar = tqdm(problems_test)
+    compteur = 0.0
+    total = 0.0
+    for _, problem in enumerate(test_bar):
+        solutions = g.find_solutions(problem, g, path)
+        for batch, solution in enumerate(solutions):
+            total += 1
+            if solution is not None:
+                print("[%s] %s" % (problem.dimacs[batch], str(solution)))
+                compteur +=1
+
+    print('Pourcentage pb solved variables: {:4f}'.format(compteur/total))
+

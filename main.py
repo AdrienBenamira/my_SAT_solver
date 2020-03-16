@@ -31,6 +31,7 @@ parser.add_argument("--p_geo", default=config.generate_data.p_geo, type=two_args
 
 parser.add_argument("--train_dir", default=config.path.train_dir)
 parser.add_argument("--val_dir", default=config.path.val_dir)
+parser.add_argument("--test_dir", default=config.path.test_dir)
 parser.add_argument("--logs_tensorboard", default=config.path.logs_tensorboard)
 
 parser.add_argument("--n_epochs", default=config.training.n_epochs, type=two_args_str_int)
@@ -71,8 +72,8 @@ if args.do_it:
 
 train_problems_loader = ProblemsLoader([args.train_dir + "/" + f for f in os.listdir(args.train_dir)])
 val_problems_loader = ProblemsLoader([args.val_dir + "/" + f for f in os.listdir(args.val_dir)])
-#test_problems_loader = ProblemsLoader([args.test_dir + "/" + f for f in os.listdir(args.test_dir)])
-dataloaders = {'train': train_problems_loader, 'val': val_problems_loader}
+test_problems_loader = ProblemsLoader([args.test_dir + "/" + f for f in os.listdir(args.test_dir)])
+dataloaders = {'train': train_problems_loader, 'val': val_problems_loader, 'test': test_problems_loader,}
 
 model = NeuroSAT(config)
 criterion = nn.BCELoss()
