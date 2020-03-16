@@ -4,9 +4,9 @@ general:
   device: 0
 
 path:
-  dimacs_dir: ./data/val/dimacs
-  out_dir: ./data/val/pickle
-  train_dir: ./data/petit_train/pickle
+  dimacs_dir: ./data/train/dimacs
+  out_dir: ./data/train/pickle
+  train_dir: ./data/train/pickle
   val_dir: ./data/val/pickle
   test_dir: ./data/test/pickle
   logs_tensorboard : ./runs/test_1
@@ -14,7 +14,7 @@ path:
 
 generate_data:
   do_it: No
-  n_pairs: 100 # nombre de données de train
+  n_pairs: 100000 # nombre de données de train
   min_n: 3 #loi uniforme pour le nombre de varible : nombre min
   max_n: 5 #loi uniforme pour le nombre de varible : nombre min
   max_nodes_per_batch: 12000 #We batched multiple problems together,
