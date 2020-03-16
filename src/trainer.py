@@ -69,7 +69,7 @@ def train_model(path, writer, model, dataloaders, criterion, optimizer,device, n
                         optimizer.step()
 
 
-                    preds = torch.where(outputs > 0.5, torch.ones(outputs.shape), torch.zeros(outputs.shape))
+                    preds = torch.where(outputs > 0.5, torch.ones(outputs.shape).to(device), torch.zeros(outputs.shape).to(device))
 
                     TP += (preds.eq(1) & target.eq(1)).cpu().sum()
                     TN += (preds.eq(0) & target.eq(0)).cpu().sum()
