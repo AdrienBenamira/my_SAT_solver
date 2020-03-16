@@ -85,7 +85,7 @@ class NeuroSAT(nn.Module):
 
 
 
-        init_ts = self.init_ts
+        init_ts = self.init_ts.to(self.device)
         # 1 x n_lits x dim & 1 x n_clauses x dim
         L_init = self.L_init(init_ts).view(1, 1, -1).to(self.device)
         # print(L_init.shape)
