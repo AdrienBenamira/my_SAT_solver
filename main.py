@@ -57,6 +57,10 @@ with open(path_save_model+'commandline_args.txt', 'w') as f:
     json.dump(args.__dict__, f, indent=2)
 
 print("Use Hardware : ", device)
+if torch.cuda.device_count() > 1:
+  print("Let's use", torch.cuda.device_count(), "GPUs!")
+
+
 
 # Reproductibilites
 seed = args.seed
@@ -82,6 +86,7 @@ dataloaders = {'train': train_problems_loader, 'val': val_problems_loader, 'test
 
 model = NeuroSAT(args, device)
 model.to(device)
+model = nn.DataParallel(model)
 criterion = nn.BCELoss().to(device)
 optimizer = torch.optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
 
