@@ -94,7 +94,7 @@ class ProblemsLoader(object):
         if not self.has_next():
             self.reset()
         filename = self.filenames[self.next_file_num]
-        print("Loading %s..." % filename)
+        #print("Loading %s..." % filename)
         with open(filename, 'rb') as f:
             problems = pickle.load(f)
         self.next_file_num += 1
@@ -207,8 +207,8 @@ class DataGenerator(object):
             all_dimacs.append(dimacs)
             offset += n_vars
         print(all_iclauses, all_is_sat, all_n_cells, all_dimacs,offset )
-        if len(all_dimacs) > 2:
-            print(ok)
+
+
 
         return Problem(offset, all_iclauses, all_is_sat, all_n_cells, all_dimacs)
 
