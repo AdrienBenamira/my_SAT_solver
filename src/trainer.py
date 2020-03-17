@@ -95,23 +95,7 @@ def train_model(path, writer, model, dataloaders, criterion, optimizer,device, n
                     #running_corrects += torch.sum(preds == labels.data)
                     nbre_sample += n_batches
 
-            if (index_pb%100):
 
-
-                epoch_loss = running_loss / nbre_sample
-                acc = (TP.item() + TN.item()) * 1.0 / TOT.item()
-                #epoch_acc = running_corrects.double() / nbre_sample
-
-                print('{} Loss: {:.4f}'.format(
-                    phase, epoch_loss))
-
-
-
-
-                print('{} Acc: {:.4f}'.format(
-                    phase, acc))
-
-                print(desc)
 
 
             epoch_loss = running_loss / nbre_sample
@@ -139,20 +123,22 @@ def train_model(path, writer, model, dataloaders, criterion, optimizer,device, n
             if phase == 'val' and epoch_loss < best_loss:
                 best_loss = epoch_loss
                 best_model_wts = copy.deepcopy(model.state_dict())
+                torch.save({'epoch': epoch + 1, 'acc': best_loss, 'state_dict': model.state_dict()},
+                           os.path.join(path, str(best_loss) + '_bestloss.pth.tar'))
 
 
-            if phase == 'val' and acc >= best_acc:
-                best_acc = acc
 
-            torch.save({'epoch': epoch + 1, 'acc': acc, 'state_dict': model.state_dict()},
-                       os.path.join(path, str(epoch_loss) + '_last.pth.tar'))
+
             if phase == 'val' and acc >= best_acc:
                 best_acc = acc
                 torch.save({'epoch': epoch + 1, 'acc': best_acc, 'state_dict': model.state_dict()},
-                           os.path.join(path, str(best_acc) + '_best.pth.tar'))
+                           os.path.join(path, str(best_acc) + '_bestacc.pth.tar'))
 
 
         print()
+
+    torch.save({'epoch': epoch + 1, 'acc': acc, 'state_dict': model.state_dict()},
+               os.path.join(path, str(epoch_loss) + '_last.pth.tar'))
 
     problems_test, train_filename = dataloaders["test"].get_next()
 
