@@ -24,10 +24,10 @@ class MLP(nn.Module):
 import torch
 from torch.autograd import Function
 
-def kl_divergence(p, p_hat):
+def kl_divergence(p, p_hat, device):
     funcs = nn.Sigmoid()
     p_hat = funcs(p_hat)
-    p_tensor = p_hat.clone()
+    p_tensor = p_hat.clone().to(device)
     p_tensor.data.fill_(p)
     return p_tensor * torch.log(p_tensor) - p_tensor * torch.log(p_hat) + (1 - p_tensor) * torch.log(1 - p_tensor) - (1 - p_tensor) * torch.log(1 - p_hat)
 
@@ -42,7 +42,7 @@ class L1Penalty(Function):
     @staticmethod
     def backward(ctx, grad_output):
         input, = ctx.saved_variables
-        grad_input = input.clone().sign().mul(ctx.l1weight)
+        grad_input = input.clone().sign().mul(ctx.l1weight).to(input.device)
         grad_input += grad_output
         return grad_input, None
 
@@ -57,7 +57,7 @@ class KLpenalty(Function):
     @staticmethod
     def backward(ctx, grad_output):
         input, = ctx.saved_variables
-        grad_input = kl_divergence(ctx.l1weight, input.clone())
+        grad_input = kl_divergence(ctx.l1weight, input.clone(), input.device).to(input.device)
         grad_input += grad_output
         return grad_input, None
 

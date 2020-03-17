@@ -30,9 +30,9 @@ training:
   T : 26
   weight_decay: 0.0000000001
   lr: 0.00002
-  sparse: No
+  sparse: Yes
   l1weight: 0.001
-  sparseKL: Yes
+  sparseKL: No
   KL_distribval: 0.1
   initialisation: random #random, predict_model
 
