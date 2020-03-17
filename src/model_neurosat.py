@@ -91,6 +91,7 @@ class NeuroSAT(nn.Module):
         self.denom = torch.sqrt(torch.Tensor([self.d]))
 
         self.compteur_plot = 0
+        self.pca_train = None
 
         #self.device = device
 
@@ -264,20 +265,29 @@ class NeuroSAT(nn.Module):
                         if self.compteur_plot < self.args.nbre_plot:
                             if flag_plot:
                                 self.compteur_plot += 1
-
                                 liste_plot = []
 
-                                key_acp = list(model.acp_dico.keys())[-1]
+                                if self.pca_train is None:
 
-                                X2 = model.acp_dico[key_acp]
 
-                                L = np.reshape(X2.cpu(), [2 * n_batches, n_vars_per_batch, self.d])
-                                L = np.concatenate([L[batch, :, :], L[n_batches + batch, :, :]], axis=0)
 
-                                X = L
 
-                                pca = PCA(n_components=2)
-                                pca_train = pca.fit(X)
+                                    key_acp = list(model.acp_dico.keys())[-1]
+
+                                    X2 = model.acp_dico[key_acp]
+
+                                    L = np.reshape(X2.cpu(), [2 * n_batches, n_vars_per_batch, self.d])
+                                    L = np.concatenate([L[batch, :, :], L[n_batches + batch, :, :]], axis=0)
+
+                                    X = L
+
+                                    pca = PCA(n_components=2)
+                                    pca_train = pca.fit(X)
+                                    self.pca_train = pca_train
+                                else:
+                                    pca_train = self.pca_train
+                                    print("okKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK")
+
 
                                 for key_acp in model.acp_dico.keys():
 

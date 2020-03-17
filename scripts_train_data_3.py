@@ -18,7 +18,7 @@ for limit in ["3_5/", "7_10/", "12_15/"]:
 
 
 
-    os.system('python3 main.py --device ' + str(3) + ' --seed ' + str(seed) + ' --initialisation random --sparse Yes --sparseKL No --l1weight 0.01 --train_dir '+path1+
+    os.system('python3 main.py --device ' + str(3) + ' --seed ' + str(seed) + ' --initialisation random --sparse Yes --sparseKL No --l1weight 0.0001 --train_dir '+path1+
         ' --test_dir '+path2+' --val_dir ' +path3)
 
     print()
@@ -26,7 +26,7 @@ for limit in ["3_5/", "7_10/", "12_15/"]:
     print()
 
     os.system(
-        'python3 main.py --device ' + str(3) + ' --seed ' + str(seed) + ' --initialisation random --sparse No --sparseKL Yes --KL_distribval 0.0 1 --train_dir '+path1+
+        'python3 main.py --device ' + str(3) + ' --seed ' + str(seed) + ' --initialisation random --sparse No --sparseKL Yes --KL_distribval 0.01 --train_dir '+path1+
         ' --test_dir '+path2+' --val_dir ' +path3)
 
 
