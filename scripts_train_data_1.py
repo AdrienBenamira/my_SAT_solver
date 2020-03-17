@@ -17,16 +17,16 @@ for limit in ["3_5/", "7_10/", "12_15/"]:
 
 
     os.system(
-        'python3 main.py --device ' + str(1) + ' --seed ' + str(seed) + ' --initialisation predict_model --sparse No --sparseKL No --train_dir '+path1+
+        'python3 main.py --n_epochs 5 --device ' + str(1) + ' --seed ' + str(seed) + ' --initialisation predict_model --sparse No --sparseKL No --train_dir '+path1+
         ' --test_dir '+path2+' --val_dir ' +path3)
 
     print()
     print()
     print()
 
-    os.system(
-        'python3 main.py --device ' + str(1) + ' --seed ' + str(seed) + ' --initialisation random --sparse No --sparseKL Yes --KL_distribval 0.1 --train_dir '+path1+
-        ' --test_dir '+path2+' --val_dir ' +path3)
+    #os.system(
+    #    'python3 main.py --device ' + str(1) + ' --seed ' + str(seed) + ' --initialisation random --sparse No --sparseKL Yes --KL_distribval 0.1 --train_dir '+path1+
+    #    ' --test_dir '+path2+' --val_dir ' +path3)
 
 
     print()
