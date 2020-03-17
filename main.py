@@ -3,7 +3,7 @@ import PyMiniSolvers.minisolvers as minisolvers
 import random
 import numpy as np
 import os
-from utils.generate_data import DataGenerator, ProblemsLoader
+from utils.create_database_random import DataGenerator, ProblemsLoader
 from src.model_neurosat import *
 from torch.utils.tensorboard import SummaryWriter
 from src.trainer import train_model
@@ -20,6 +20,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--seed", default=config.general.seed, type=two_args_str_int, choices=[0, 1, 2])
 parser.add_argument("--task_name", default=config.general.task_name)
 parser.add_argument("--device", default=config.general.device, type=two_args_str_int, choices=[0, 1, 2, 3])
+parser.add_argument("--nbre_plot", default=config.general.nbre_plot, type=two_args_str_int)
 
 parser.add_argument("--do_it", default=config.generate_data.do_it, type=str2bool, nargs='?', const=False)
 parser.add_argument("--n_pairs", default=config.generate_data.n_pairs, type=two_args_str_int)
@@ -43,7 +44,7 @@ parser.add_argument("--T", default=config.training.T, type=two_args_str_int)
 parser.add_argument("--sparse", default=config.training.sparse, type=str2bool, nargs='?', const=False)
 parser.add_argument("--l1weight", default=config.training.l1weight, type=two_args_str_int)
 parser.add_argument("--sparseKL", default=config.training.sparseKL, type=str2bool, nargs='?', const=False)
-
+parser.add_argument("--KL_distribval", default=config.training.KL_distribval, type=two_args_str_int)
 
 
 args = parser.parse_args()

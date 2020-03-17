@@ -62,9 +62,9 @@ class KLpenalty(Function):
         return grad_input, None
 
 
-class NeuroSAT(nn.Module):
-    def __init__(self, args, device):
-        super(NeuroSAT, self).__init__()
+class NeuroSAT2(nn.Module):
+    def __init__(self, args, model1):
+        super(NeuroSAT2, self).__init__()
         self.args = args
         
         d = self.args.embbeding_dim
@@ -92,11 +92,13 @@ class NeuroSAT(nn.Module):
 
         self.compteur_plot = 0
 
+        self.model1 = model1
+
         #self.device = device
 
 
 
-    def forward(self, problem):
+    def forward(self, problem, index_pb, contexte):
         n_vars = problem.n_vars
         n_lits = problem.n_lits
         n_clauses = problem.n_clauses
@@ -105,8 +107,14 @@ class NeuroSAT(nn.Module):
 
         ts_L_unpack_indices = torch.Tensor(problem.L_unpack_indices).t().long()
 
+        _, fl, fc = self.model1.find_solutions(problem, self.model1, "_")
 
 
+
+        L_init = fl.unsqueeze(0)
+        C_init = fc.unsqueeze(0)
+
+        """
         init_ts = self.init_ts.to(self.L_init.weight.device)
         # 1 x n_lits x dim & 1 x n_clauses x dim
         L_init = self.L_init(init_ts).view(1, 1, -1).to(self.L_init.weight.device)
@@ -117,6 +125,8 @@ class NeuroSAT(nn.Module):
         C_init = self.C_init(init_ts).view(1, 1, -1).to(self.L_init.weight.device)
         # print(C_init.shape)
         C_init = C_init.repeat(1, n_clauses, 1)
+        """
+
 
         # print(L_init.shape, C_init.shape)
 
@@ -169,7 +179,6 @@ class NeuroSAT(nn.Module):
 
         self.all_votes = vote
         self.final_lits = logits
-        self.final_clauses = clauses
         # print('vote', vote.shape)
         vote_join = torch.cat([vote[:n_vars, :], vote[n_vars:, :]], dim=1)
         # print('vote_join', vote_join.shape)
@@ -196,18 +205,14 @@ class NeuroSAT(nn.Module):
 
         with torch.set_grad_enabled(False):
 
-            _ = model(problem)
+            _ = model(problem, 0, "val")
 
             all_votes = model.all_votes
             final_lits = model.final_lits
-            final_clauses = model.final_clauses
             #all_votes, final_lits, _, _ = self.sess.run([self.all_votes, self.final_lits, self.logits, self.predict_costs], feed_dict=d)
 
             solutions = []
-            target = np.array(problem.is_sat)
             for batch in range(len(problem.is_sat)):
-
-                #if target[batch]:
                 decode_cheap_A = (lambda vlit: all_votes[vlit, 0] > all_votes[flip_vlit(vlit), 0])
                 decode_cheap_B = (lambda vlit: not decode_cheap_A(vlit))
 
@@ -272,7 +277,7 @@ class NeuroSAT(nn.Module):
 
                             imageio.mimsave(path + '/'+str(self.compteur_plot)+'_ACP_'+str(problem.dimacs[batch])+'.gif', liste_plot, fps=5)
 
-        return solutions, final_lits, final_clauses
+        return solutions, L, final_lits
 
     def solves(self, problem, batch, phi):
         start_cell = sum(problem.n_cells_per_batch[0:batch])

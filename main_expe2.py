@@ -1,5 +1,7 @@
 from tqdm import tqdm
 
+from src.model_neurosat_v2 import NeuroSAT2
+from src.trainer2 import train_model2
 from utils.config import Config
 import PyMiniSolvers.minisolvers as minisolvers
 import random
@@ -13,8 +15,6 @@ import json
 import argparse
 import datetime
 from utils.utils import str2bool, dir_path, two_args_str_int
-import time
-
 
 config = Config()
 
@@ -92,45 +92,11 @@ model.load_state_dict(net['state_dict'])
 model.eval()
 
 
-problems_test, train_filename = dataloaders["train"].get_next()
-test_bar = tqdm(problems_test)
-compteur = 0.0
-total = 0.0
+model2 = NeuroSAT2(args, model)
+model2.to(device)
+criterion = nn.BCELoss().to(device)
+optimizer = torch.optim.Adam(model2.parameters(), lr=args.lr, weight_decay=args.weight_decay)
+
+best_model = train_model2(path_save_model, writer, model2, dataloaders, criterion, optimizer,device, num_epochs=args.n_epochs)
 
 
-TP, TN, FN, FP = 0, 0, 0, 0
-times = []
-
-for _, problem in enumerate(test_bar):
-    start_time = time.time()
-    outputs = model(problem)
-    preds = torch.where(outputs > 0.5, torch.ones(outputs.shape), torch.zeros(outputs.shape)).cpu().detach().numpy()
-    end_time = time.time()
-    duration = (end_time - start_time) * 1000
-    times.append(duration)
-
-    target = np.array(problem.is_sat)
-    TP += int(((preds == 1) & (target == 1)).sum())
-    TN += int(((preds == 0) & (target == 0)).sum())
-    FN += int(((preds == 0) & (target == 1)).sum())
-    FP += int(((preds == 1) & (target == 0)).sum())
-
-    num_cases = TP + TN + FN + FP
-    desc = "%d rnds: tot time %.2f ms for %d cases, avg time: %.2f ms; the pred acc is %.2f, in which TP: %.2f, TN: %.2f, FN: %.2f, FP: %.2f" \
-           % (args.T, sum(times), len(times), sum(times) * 1.0 / len(times), (TP + TN) * 1.0 / num_cases,
-              2*TP * 1.0 / num_cases, 2*TN * 1.0 / num_cases, 2*FN * 1.0 / num_cases, 2*FP * 1.0 / num_cases)
-print(desc)
-
-for _, problem in enumerate(test_bar):
-    solutions, fl, fc = model.find_solutions(problem, model, path_save_model)
-    target = np.array(problem.is_sat)
-    for batch, solution in enumerate(solutions):
-        if target[batch]:
-            total += 1
-            if solution is not None:
-                #print("[%s] %s" % (problem.dimacs[batch], str(solution)))
-                compteur +=1
-
-print('Pourcentage pb solved variables: {:4f} %'.format(100*compteur/total))
-print('number sat solved: ', (compteur))
-print('number total sat solved: ', (total))

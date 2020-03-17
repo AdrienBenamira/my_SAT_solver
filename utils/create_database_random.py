@@ -123,8 +123,8 @@ class DataGenerator(object):
 
     def mk_out_filenames(self, opts, n_vars, t):
         prefix = "%s/sr_n=%.4d_pk2=%.2f_pg=%.2f_t=%d" % \
-            (opts.path.dimacs_dir, n_vars, opts.generate_data.p_k_2,
-            opts.generate_data.p_geo, t)
+            (opts.dimacs_dir, n_vars, opts.p_k_2,
+            opts.p_geo, t)
         return ("%s_sat=0.dimacs" % prefix, "%s_sat=1.dimacs" % prefix)
 
     def generate_k_iclause(self, n, k):
@@ -132,15 +132,15 @@ class DataGenerator(object):
         return [v + 1 if random.random() < 0.5 else -(v + 1) for v in vs]
 
     def gen_iclause_pair(self, opts):
-        n = random.randint(opts.generate_data.min_n, opts.generate_data.max_n)
+        n = random.randint(opts.min_n, opts.max_n)
         solver = self.minisolvers.MinisatSolver()
         for i in range(n): solver.new_var(dvar=True)
 
         iclauses = []
 
         while True:
-            k_base = 1 if random.random() < opts.generate_data.p_k_2 else 2
-            k = k_base + np.random.geometric(opts.generate_data.p_geo)
+            k_base = 1 if random.random() < opts.p_k_2 else 2
+            k = k_base + np.random.geometric(opts.p_geo)
             iclause = self.generate_k_iclause(n, k)
 
             solver.add_clause(iclause)
@@ -167,10 +167,10 @@ class DataGenerator(object):
         return n_vars, iclauses
 
     def mk_dataset_filename(self, opts, n_batches):
-        dimacs_path = opts.path.dimacs_dir.split("/")
+        dimacs_path = opts.dimacs_dir.split("/")
         dimacs_dir = dimacs_path[-1] if dimacs_path[-1] != "" else dimacs_path[-2]
-        return "%s/data_dir=%s_npb=%d_nb=%d.pkl" % (opts.path.out_dir, dimacs_dir,
-         opts.generate_data.max_nodes_per_batch, n_batches)
+        return "%s/data_dir=%s_npb=%d_nb=%d.pkl" % (opts.out_dir, dimacs_dir,
+         opts.max_nodes_per_batch, n_batches)
 
 
     def solve_sat(self, n_vars, iclauses):
@@ -216,7 +216,7 @@ class DataGenerator(object):
 
     def run_main(self):
 
-        for pair in range(self.config.generate_data.n_pairs):
+        for pair in range(self.config.n_pairs):
             n_vars, iclauses, iclause_unsat, iclause_sat = self.gen_iclause_pair(self.config)
             out_filenames = self.mk_out_filenames(self.config, n_vars, pair)
 
@@ -230,7 +230,7 @@ class DataGenerator(object):
         batches = []
         n_nodes_in_batch = 0
 
-        filenames = os.listdir(self.config.path.dimacs_dir)
+        filenames = os.listdir(self.config.dimacs_dir)
 
         # to improve batching
         filenames = sorted(filenames)
@@ -239,20 +239,20 @@ class DataGenerator(object):
 
         for filename in filenames:
             #print(filename)
-            n_vars, iclauses = self.parse_dimacs("%s/%s" % (self.config.path.dimacs_dir, filename))
+            n_vars, iclauses = self.parse_dimacs("%s/%s" % (self.config.dimacs_dir, filename))
             n_clauses = len(iclauses)
             n_cells = sum([len(iclause) for iclause in iclauses])
 
             n_nodes = 2 * n_vars + n_clauses
-            if n_nodes > self.config.generate_data.max_nodes_per_batch:
+            if n_nodes > self.config.max_nodes_per_batch:
                 continue
 
             batch_ready = False
-            if (self.config.generate_data.one and len(problems) > 0):
+            if (self.config.one and len(problems) > 0):
                 batch_ready = True
             elif (prev_n_vars and n_vars != prev_n_vars):
                 batch_ready = True
-            elif (not self.config.generate_data.one) and n_nodes_in_batch + n_nodes > self.config.generate_data.max_nodes_per_batch:
+            elif (not self.config.one) and n_nodes_in_batch + n_nodes > self.config.max_nodes_per_batch:
                 batch_ready = True
 
             if batch_ready:
@@ -275,8 +275,8 @@ class DataGenerator(object):
             del problems[:]
 
         # create directory
-        if not os.path.exists(self.config.path.out_dir):
-            os.mkdir(self.config.path.out_dir)
+        if not os.path.exists(self.config.out_dir):
+            os.mkdir(self.config.out_dir)
 
         dataset_filename = self.mk_dataset_filename(self.config, len(batches))
         print("Writing %d batches to %s...\n" % (len(batches), dataset_filename))

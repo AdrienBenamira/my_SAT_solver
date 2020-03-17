@@ -2,19 +2,20 @@ general:
   seed: 0
   task_name: test
   device: 0
+  nbre_plot: 0
 
 path:
-  dimacs_dir: ./data/val/dimacs
-  out_dir: ./data/val/pickle
-  train_dir: ./data/petit_train/pickle
-  val_dir: ./data/val/pickle
-  test_dir: ./data/test/pickle
+  dimacs_dir: ./data/little_dataset_100p/3_5/train/dimacs
+  out_dir: ./data/little_dataset_100p/3_5/train/pickle
+  train_dir: ./data/little_dataset_100p/3_5/train/pickle
+  val_dir: ./data/little_dataset_100p/3_5/val/pickle
+  test_dir: ./data/little_dataset_100p/3_5/tes/pickle
   logs_tensorboard : ./runs/test_1
-  model: ./runs/test_1test/2020_03_16_15_59_01_297781/0.538135_best.pth.tar
+  model: /home/adriben/Documents/Recherche/Projets/Projet_SAT_solver/results_cloud/runs/test_1test/2020_03_16_19_34_38_772266/0.95_best.pth.tar
 
 generate_data:
   do_it: No
-  n_pairs: 1000 # nombre de données de train
+  n_pairs: 100 # nombre de données de train
   min_n: 3 #loi uniforme pour le nombre de varible : nombre min
   max_n: 5 #loi uniforme pour le nombre de varible : nombre min
   max_nodes_per_batch: 12000 #We batched multiple problems together,
@@ -29,8 +30,10 @@ training:
   T : 26
   weight_decay: 0.0000000001
   lr: 0.00002
-  sparse: yes
-  sparseKL: No
+  sparse: No
   l1weight: 0.001
+  sparseKL: No
+  KL_distribval: 0.3
+
 
 

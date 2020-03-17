@@ -6,8 +6,7 @@ from tqdm import tqdm
 import os
 import numpy as np
 
-
-def train_model(path, writer, model, dataloaders, criterion, optimizer,device, num_epochs=5):
+def train_model2(path, writer, model, dataloaders, criterion, optimizer,device, num_epochs=5):
     sigmoid  = nn.Sigmoid()
     since = time.time()
 
@@ -54,7 +53,7 @@ def train_model(path, writer, model, dataloaders, criterion, optimizer,device, n
                 # forward
                 # track history if only in train
                 with torch.set_grad_enabled(phase == 'train'):
-                    outputs = model(problem)
+                    outputs = model(problem, index_pb, phase)
                     target = torch.Tensor(problem.is_sat).float().to(model.L_init.weight.device)
                     # print(outputs.shape, target.shape)
                     # print(outputs, target)
@@ -141,13 +140,13 @@ def train_model(path, writer, model, dataloaders, criterion, optimizer,device, n
     torch.save({'epoch': epoch + 1, 'acc': acc, 'state_dict': model.state_dict()},
                os.path.join(path, str(epoch_loss) + '_last.pth.tar'))
 
-    problems_test, train_filename = dataloaders["test"].get_next()
 
     time_elapsed = time.time() - since
     print('Training complete in {:.0f}m {:.0f}s'.format(
         time_elapsed // 60, time_elapsed % 60))
     print('Best val Loss: {:4f}'.format(best_loss))
 
+    problems_test, train_filename = dataloaders["test"].get_next()
 
     solve_pb(problems_test, model, path)
 
@@ -168,7 +167,7 @@ def solve_pb(problems_test, model, path):
 
     for _, problem in enumerate(test_bar):
         start_time = time.time()
-        outputs = model(problem)
+        outputs = model(problem, 0, "val")
         preds = torch.where(outputs > 0.5, torch.ones(outputs.shape), torch.zeros(outputs.shape)).cpu().detach().numpy()
         end_time = time.time()
         duration = (end_time - start_time) * 1000
