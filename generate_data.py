@@ -43,7 +43,7 @@ parser.add_argument("--logs_tensorboard", default=config.path.logs_tensorboard)
 args = parser.parse_args()
 
 writer = SummaryWriter(args.logs_tensorboard)
-device = torch.device("cuda:"+int(args.device) if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda:" + str(args.device) if torch.cuda.is_available() else "cpu")
 print()
 print("Use Hardware : ", device)
 #Reproductibilites
