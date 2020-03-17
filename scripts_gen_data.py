@@ -61,6 +61,6 @@ for n_pairs in ["little_dataset_100p/", "dataset_10000p/"]:
             path2 = "./data/" + n_pairs + limit + dos + "pickle"
             os.system('mkdir '+ path1)
             os.system('mkdir ' + path2)
-            os.system('python3 create_database_random.py --seed '+str(seed)+' --n_pairs '+str(n_pairsn)+' --dimacs_dir '+path1+' --out_dir '+path2+' --min_n '+str(min_nn)+' --max_n '+str(max_nn))
+            os.system('python3 generate_data.py --seed '+str(seed)+' --n_pairs '+str(n_pairsn)+' --dimacs_dir '+path1+' --out_dir '+path2+' --min_n '+str(min_nn)+' --max_n '+str(max_nn))
 
 
