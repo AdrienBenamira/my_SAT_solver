@@ -5,7 +5,7 @@ random.seed(0)
 
 
 #for n_pairs in ["little_dataset_100p/", "dataset_10000p/"]:
-n_pairs = "little_dataset_100p/"
+n_pairs = "dataset_10000p/"
 
 for limit in ["3_5/", "7_10/", "12_15/"]:
 
