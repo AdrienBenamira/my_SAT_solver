@@ -27,6 +27,7 @@ def train_model(path, writer, model, dataloaders, criterion, optimizer, device, 
         for phase in ['train', 'val']:
             if phase == 'train':
                 model.train()
+            if phase == 'val':
                 model.eval()
             running_loss = 0.0
             nbre_sample = 0
