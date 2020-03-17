@@ -27,13 +27,15 @@ def train_model(path, writer, model, dataloaders, criterion, optimizer, device, 
         for phase in ['train', 'val']:
             if phase == 'train':
                 model.train()
+                index_max =-1
             if phase == 'val':
                 model.eval()
+                index_max = 125
             running_loss = 0.0
             nbre_sample = 0
             TP, TN, FN, FP = torch.zeros(1).long(), torch.zeros(1).long(), torch.zeros(1).long(), torch.zeros(1).long()
             train_problems, train_filename = dataloaders[phase].get_next()
-            train_bar = tqdm(train_problems)
+            train_bar = tqdm(train_problems[:index_max])
             for index_pb, problem in enumerate(train_bar):
                 n_batches = len(problem.is_sat)
                 optimizer.zero_grad()

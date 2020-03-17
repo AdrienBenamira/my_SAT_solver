@@ -25,7 +25,7 @@ generate_data:
   p_geo: 0.4 # parametre pour loi geometric selon rmq 2 partie 4
 
 training:
-  n_epochs: 20
+  n_epochs: 15
   embbeding_dim: 128
   T : 26
   weight_decay: 0.0000000001
