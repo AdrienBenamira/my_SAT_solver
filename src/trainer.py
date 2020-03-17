@@ -114,7 +114,7 @@ def solve_pb(problems_test, model, path):
     compteur = 0.0
     total = 0.0
     sigmoid = nn.Sigmoid()
-
+    device = model.L_init.weight.device
     TP, TN, FN, FP = 0, 0, 0, 0
     times = []
 
@@ -122,7 +122,7 @@ def solve_pb(problems_test, model, path):
         start_time = time.time()
         outputs = model(problem, "test")
         outputs = sigmoid(outputs)
-        preds = torch.where(outputs > 0.5, torch.ones(outputs.shape), torch.zeros(outputs.shape)).cpu().detach().numpy()
+        preds = torch.where(outputs > 0.5, torch.ones(outputs.shape).to(device), torch.zeros(outputs.shape).to(device)).cpu().detach().numpy()
 
         end_time = time.time()
         duration = (end_time - start_time) * 1000
