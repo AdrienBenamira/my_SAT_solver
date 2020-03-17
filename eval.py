@@ -8,7 +8,7 @@ import os
 from utils.create_database_random import DataGenerator, ProblemsLoader
 from src.model_neurosat import *
 from torch.utils.tensorboard import SummaryWriter
-from src.trainer import train_model
+from src.trainer import train_model, solve_pb
 import json
 import argparse
 import datetime
@@ -20,6 +20,7 @@ config = Config()
 
 # initiate the parser
 parser = argparse.ArgumentParser()
+
 
 parser.add_argument("--seed", default=config.general.seed, type=two_args_str_int, choices=[0, 1, 2])
 parser.add_argument("--task_name", default=config.general.task_name)
@@ -50,6 +51,8 @@ parser.add_argument("--sparse", default=config.training.sparse, type=str2bool, n
 parser.add_argument("--l1weight", default=config.training.l1weight, type=two_args_str_int)
 parser.add_argument("--sparseKL", default=config.training.sparseKL, type=str2bool, nargs='?', const=False)
 parser.add_argument("--KL_distribval", default=config.training.KL_distribval, type=two_args_str_int)
+parser.add_argument("--initialisation", default=config.training.initialisation, choices=['random', 'predict_model'])
+
 
 
 
@@ -92,45 +95,6 @@ model.load_state_dict(net['state_dict'])
 model.eval()
 
 
-problems_test, train_filename = dataloaders["train"].get_next()
-test_bar = tqdm(problems_test)
-compteur = 0.0
-total = 0.0
+problems_test, train_filename = dataloaders["test"].get_next()
 
-
-TP, TN, FN, FP = 0, 0, 0, 0
-times = []
-
-for _, problem in enumerate(test_bar):
-    start_time = time.time()
-    outputs = model(problem)
-    preds = torch.where(outputs > 0.5, torch.ones(outputs.shape), torch.zeros(outputs.shape)).cpu().detach().numpy()
-    end_time = time.time()
-    duration = (end_time - start_time) * 1000
-    times.append(duration)
-
-    target = np.array(problem.is_sat)
-    TP += int(((preds == 1) & (target == 1)).sum())
-    TN += int(((preds == 0) & (target == 0)).sum())
-    FN += int(((preds == 0) & (target == 1)).sum())
-    FP += int(((preds == 1) & (target == 0)).sum())
-
-    num_cases = TP + TN + FN + FP
-    desc = "%d rnds: tot time %.2f ms for %d cases, avg time: %.2f ms; the pred acc is %.2f, in which TP: %.2f, TN: %.2f, FN: %.2f, FP: %.2f" \
-           % (args.T, sum(times), len(times), sum(times) * 1.0 / len(times), (TP + TN) * 1.0 / num_cases,
-              2*TP * 1.0 / num_cases, 2*TN * 1.0 / num_cases, 2*FN * 1.0 / num_cases, 2*FP * 1.0 / num_cases)
-print(desc)
-
-for _, problem in enumerate(test_bar):
-    solutions, fl, fc = model.find_solutions(problem, model, path_save_model)
-    target = np.array(problem.is_sat)
-    for batch, solution in enumerate(solutions):
-        if target[batch]:
-            total += 1
-            if solution is not None:
-                #print("[%s] %s" % (problem.dimacs[batch], str(solution)))
-                compteur +=1
-
-print('Pourcentage pb solved variables: {:4f} %'.format(100*compteur/total))
-print('number sat solved: ', (compteur))
-print('number total sat solved: ', (total))
+solve_pb(problems_test, model, path_save_model)

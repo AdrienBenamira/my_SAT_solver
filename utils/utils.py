@@ -33,6 +33,12 @@ def two_args_str_int(x):
     except:
         return x
 
+def two_args_str_float(x):
+    try:
+        return float(x)
+    except:
+        return x
+
 
 class F1_Loss(nn.Module):
     '''Calculate F1 score. Can work with gpu tensors

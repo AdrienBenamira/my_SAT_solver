@@ -1,17 +1,17 @@
 general:
   seed: 0
-  task_name: test
+  task_name: expe1
   device: 0
-  nbre_plot: 0
+  nbre_plot: 1
 
 path:
   dimacs_dir: ./data/little_dataset_100p/3_5/train/dimacs
   out_dir: ./data/little_dataset_100p/3_5/train/pickle
   train_dir: ./data/little_dataset_100p/3_5/train/pickle
   val_dir: ./data/little_dataset_100p/3_5/val/pickle
-  test_dir: ./data/little_dataset_100p/3_5/tes/pickle
+  test_dir: ./data/little_dataset_100p/3_5/test/pickle
   logs_tensorboard : ./runs/test_1
-  model: /home/adriben/Documents/Recherche/Projets/Projet_SAT_solver/results_cloud/runs/test_1test/2020_03_16_19_34_38_772266/0.95_best.pth.tar
+  model: ./models/0.95_best.pth.tar
 
 generate_data:
   do_it: No
@@ -25,15 +25,16 @@ generate_data:
   p_geo: 0.4 # parametre pour loi geometric selon rmq 2 partie 4
 
 training:
-  n_epochs: 10
+  n_epochs: 1
   embbeding_dim: 128
   T : 26
   weight_decay: 0.0000000001
   lr: 0.00002
   sparse: No
   l1weight: 0.001
-  sparseKL: No
-  KL_distribval: 0.3
+  sparseKL: Yes
+  KL_distribval: 0.1
+  initialisation: random #random, predict_model
 
 
 

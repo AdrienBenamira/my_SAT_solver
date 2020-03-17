@@ -98,7 +98,7 @@ class NeuroSAT2(nn.Module):
 
 
 
-    def forward(self, problem, index_pb, contexte):
+    def forward(self, problem):
         n_vars = problem.n_vars
         n_lits = problem.n_lits
         n_clauses = problem.n_clauses
@@ -107,12 +107,14 @@ class NeuroSAT2(nn.Module):
 
         ts_L_unpack_indices = torch.Tensor(problem.L_unpack_indices).t().long()
 
-        _, fl, fc = self.model1.find_solutions(problem, self.model1, "_")
+
+        _, fl, fc = self.model1.find_solutions(problem, self.model1, "_", flag_plot=False)
 
 
 
         L_init = fl.unsqueeze(0)
         C_init = fc.unsqueeze(0)
+
 
         """
         init_ts = self.init_ts.to(self.L_init.weight.device)
@@ -192,7 +194,7 @@ class NeuroSAT2(nn.Module):
         return torch.cat([msg[n_vars:2 * n_vars, :], msg[:n_vars, :]], dim=0)
 
 
-    def find_solutions(self, problem, model, path):
+    def find_solutions(self, problem, model, path, flag_plot = True):
 
         def flip_vlit(vlit):
             if vlit < problem.n_vars: return vlit + problem.n_vars
@@ -205,7 +207,7 @@ class NeuroSAT2(nn.Module):
 
         with torch.set_grad_enabled(False):
 
-            _ = model(problem, 0, "val")
+            _ = model(problem)
 
             all_votes = model.all_votes
             final_lits = model.final_lits
@@ -265,17 +267,30 @@ class NeuroSAT2(nn.Module):
 
                     if solutions[-1] is not None:
                         if self.compteur_plot < self.args.nbre_plot:
-                            self.compteur_plot+=1
+                            if flag_plot:
+                                self.compteur_plot+=1
 
-                            liste_plot = []
+                                liste_plot = []
 
-                            for key_acp in model.acp_dico.keys():
+                                key_acp = list(model.acp_dico.keys())[-1]
 
                                 X2 = model.acp_dico[key_acp]
 
-                                liste_plot.append(plot_for_offset(X2,n_batches, n_vars_per_batch, self.d, batch, key_acp, solutions))
+                                L = np.reshape(X2.cpu(), [2 * n_batches, n_vars_per_batch, self.d])
+                                L = np.concatenate([L[batch, :, :], L[n_batches + batch, :, :]], axis=0)
 
-                            imageio.mimsave(path + '/'+str(self.compteur_plot)+'_ACP_'+str(problem.dimacs[batch])+'.gif', liste_plot, fps=5)
+                                X = L
+
+                                pca = PCA(n_components=2)
+                                pca_train = pca.fit(X)
+
+                                for key_acp in model.acp_dico.keys():
+
+                                    X2 = model.acp_dico[key_acp]
+
+                                    liste_plot.append(plot_for_offset(pca_train, X2,n_batches, n_vars_per_batch, self.d, batch, key_acp, solutions))
+
+                                imageio.mimsave(path + '/'+str(self.compteur_plot)+'_ACP_'+str(problem.dimacs[batch])+'.gif', liste_plot, fps=2)
 
         return solutions, L, final_lits
 
@@ -317,7 +332,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import imageio
 
-def plot_for_offset(X2,n_batches, n_vars_per_batch, d, batch, key_acp, solutions):
+def plot_for_offset(pca_train, X2,n_batches, n_vars_per_batch, d, batch, key_acp, solutions):
 
 
     L = np.reshape(X2.cpu(), [2 * n_batches, n_vars_per_batch, d])
@@ -325,9 +340,7 @@ def plot_for_offset(X2,n_batches, n_vars_per_batch, d, batch, key_acp, solutions
 
     X = L
 
-
-    pca = PCA(n_components=2)
-    X_r = pca.fit(X).transform(X)
+    X_r = pca_train.transform(X)
 
     fig, ax = plt.subplots(figsize=(10, 5))
     colors = ['navy', 'darkorange']
@@ -352,6 +365,4 @@ def plot_for_offset(X2,n_batches, n_vars_per_batch, d, batch, key_acp, solutions
     image  = image.reshape(fig.canvas.get_width_height()[::-1] + (3,))
 
     return image
-
-kwargs_write = {'fps':1.0, 'quantizer':'nq'}
 
