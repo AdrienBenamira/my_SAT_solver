@@ -1,12 +1,9 @@
-import torch
-import torch.nn as nn
-
-import torch
 import torch.nn as nn
 from sklearn.cluster import KMeans
-import numpy as np
 from sklearn.decomposition import PCA
-import matplotlib.pyplot as plt
+
+
+
 
 
 
@@ -27,6 +24,12 @@ class MLP(nn.Module):
 import torch
 from torch.autograd import Function
 
+def kl_divergence(p, p_hat):
+    funcs = nn.Sigmoid()
+    p_hat = torch.mean(funcs(p_hat), 1)
+    p_tensor = torch.Tensor([p] * len(p_hat))
+    return p_tensor * torch.log(p_tensor) - p_tensor * torch.log(p_hat) + (1 - p_tensor) * torch.log(1 - p_tensor) - (1 - p_tensor) * torch.log(1 - p_hat)
+
 class L1Penalty(Function):
 
     @staticmethod
@@ -38,7 +41,26 @@ class L1Penalty(Function):
     @staticmethod
     def backward(ctx, grad_output):
         input, = ctx.saved_variables
-        grad_input = input.clone().sign().mul(1)
+        grad_input = input.clone().sign().mul(ctx.l1weight)
+        grad_input += grad_output
+        return grad_input, None
+
+class KLpenalty(Function):
+
+    @staticmethod
+    def forward(ctx, input, l1weight):
+        ctx.save_for_backward(input)
+        ctx.l1weight = l1weight
+        return input
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        input, = ctx.saved_variables
+        grad_input = kl_divergence(ctx.l1weight, input.clone())
+        print("ok1")
+        print(grad_input)
+        print(grad_input.shape)
+        print(input.shape)
         grad_input += grad_output
         return grad_input, None
 
@@ -137,18 +159,13 @@ class NeuroSAT(nn.Module):
             clauses = C_state[0].squeeze(0)
 
             if self.args.sparse:
-
                 logits = L1Penalty.apply(logits, self.l1weight)
                 #clauses = L1Penalty.apply(clauses, self.l1weight)
+            if self.args.sparseKL:
+                logits = KLpenalty.apply(logits, 0.3)
 
-        if not self.args.sparse:
-            logits = L_state[0].squeeze(0)
-            #clauses = C_state[0].squeeze(0)
 
-        #logits = L1Penalty.apply(logits, self.l1weight)
-        #clauses = L1Penalty.apply(clauses, self.l1weight)
 
-        # print(logits.shape, clauses.shape)
 
         vote = self.L_vote(logits)
 

@@ -42,6 +42,7 @@ parser.add_argument("--lr", default=config.training.lr, type=two_args_str_int)
 parser.add_argument("--T", default=config.training.T, type=two_args_str_int)
 parser.add_argument("--sparse", default=config.training.sparse, type=str2bool, nargs='?', const=False)
 parser.add_argument("--l1weight", default=config.training.l1weight, type=two_args_str_int)
+parser.add_argument("--sparseKL", default=config.training.sparseKL, type=str2bool, nargs='?', const=False)
 
 
 
