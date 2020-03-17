@@ -98,7 +98,7 @@ class NeuroSAT2(nn.Module):
 
 
 
-    def forward(self, problem, phase):
+    def forward(self, problem):
         n_vars = problem.n_vars
         n_lits = problem.n_lits
         n_clauses = problem.n_clauses
@@ -168,13 +168,13 @@ class NeuroSAT2(nn.Module):
             logits = L_state[0].squeeze(0)
             clauses = C_state[0].squeeze(0)
 
-            if phase=="train":
 
-                if self.args.sparse:
-                    logits = L1Penalty.apply(logits, self.l1weight)
-                    #clauses = L1Penalty.apply(clauses, self.l1weight)
-                if self.args.sparseKL:
-                    logits = KLpenalty.apply(logits, self.KL_distribval)
+
+            if self.args.sparse:
+                logits = L1Penalty.apply(logits, self.l1weight)
+                #clauses = L1Penalty.apply(clauses, self.l1weight)
+            if self.args.sparseKL:
+                logits = KLpenalty.apply(logits, self.KL_distribval)
 
 
 
@@ -209,7 +209,7 @@ class NeuroSAT2(nn.Module):
 
         with torch.set_grad_enabled(False):
 
-            _ = model(problem, "test")
+            _ = model(problem)
 
             all_votes = model.all_votes
             final_lits = model.final_lits

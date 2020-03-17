@@ -38,7 +38,7 @@ def train_model(path, writer, model, dataloaders, criterion, optimizer, device, 
                 n_batches = len(problem.is_sat)
                 optimizer.zero_grad()
                 with torch.set_grad_enabled(phase == 'train'):
-                    outputs = model(problem, phase)
+                    outputs = model(problem)
                     target = torch.Tensor(problem.is_sat).float().to(model.L_init.weight.device)
                     outputs = sigmoid(outputs)
                     loss = criterion(outputs, target)
@@ -120,7 +120,7 @@ def solve_pb(problems_test, model, path):
 
     for _, problem in enumerate(test_bar):
         start_time = time.time()
-        outputs = model(problem, "test")
+        outputs = model(problem)
         outputs = sigmoid(outputs)
         preds = torch.where(outputs > 0.5, torch.ones(outputs.shape).to(device), torch.zeros(outputs.shape).to(device)).cpu().detach().numpy()
 
