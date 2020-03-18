@@ -112,11 +112,11 @@ class NeuroSAT2(nn.Module):
 
 
         if phase is "train" or phase is "val" or phase is "test" or phase is "eval":
-            if problem.dimacs[0] not in list(self.dico_init[phase].keys()):
-                _, fl, fc = self.model1.find_solutions(problem, self.model1, "_", flag_plot=False)
-                self.dico_init[phase][problem.dimacs[0]] = [fl, fc]
-            else:
-                [fl, fc] = self.dico_init[phase][problem.dimacs[0]]
+            #if problem.dimacs[0] not in list(self.dico_init[phase].keys()):
+            _, fl, fc = self.model1.find_solutions(problem, self.model1, "_", flag_plot=False)
+            #   self.dico_init[phase][problem.dimacs[0]] = [fl, fc]
+            #else:
+            #    [fl, fc] = self.dico_init[phase][problem.dimacs[0]]
             L_init = fl.unsqueeze(0)
             C_init = fc.unsqueeze(0)
         else:
