@@ -97,7 +97,7 @@ class NeuroSAT(nn.Module):
 
 
 
-    def forward(self, problem):
+    def forward(self, problem, phase=None):
         n_vars = problem.n_vars
         n_lits = problem.n_lits
         n_clauses = problem.n_clauses
@@ -286,7 +286,6 @@ class NeuroSAT(nn.Module):
                                     self.pca_train = pca_train
                                 else:
                                     pca_train = self.pca_train
-                                    print("okKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK")
 
 
                                 for key_acp in model.acp_dico.keys():
@@ -361,7 +360,7 @@ def plot_for_offset(pca_train, X2,n_batches, n_vars_per_batch, d, batch, key_acp
     ax.set_ylim(-10, 10)
     ax.set_xlim(-10, 10)
     plt.legend(loc='best', shadow=False, scatterpoints=1)
-    ax.set(xlabel='Composante 1', ylabel='Composante 2',
+    ax.set(xlabel='Composante 1 with explained variance ratio (%) '+str(100*pca_train.explained_variance_ratio_[0]), ylabel='Composante 2 variance ratio (%) '+str(pca_train.explained_variance_ratio_[1]),
            title='PCA on L at time ' + str(key_acp) + " with answer : " + str(solutions[-1]))
 
     # Used to return the plot as an image rray

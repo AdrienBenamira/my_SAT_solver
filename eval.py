@@ -1,5 +1,6 @@
 from tqdm import tqdm
 
+from src.model_neurosat_v2 import NeuroSAT2
 from utils.config import Config
 import PyMiniSolvers.minisolvers as minisolvers
 import random
@@ -40,7 +41,8 @@ parser.add_argument("--train_dir", default=config.path.train_dir)
 parser.add_argument("--val_dir", default=config.path.val_dir)
 parser.add_argument("--test_dir", default=config.path.test_dir)
 parser.add_argument("--logs_tensorboard", default=config.path.logs_tensorboard)
-parser.add_argument("--model", default=config.path.model, type=dir_path)
+parser.add_argument("--model1", default=config.path.model1, type=dir_path)
+parser.add_argument("--model2", default=config.path.model2, type=dir_path)
 
 parser.add_argument("--n_epochs", default=config.training.n_epochs, type=two_args_str_int)
 parser.add_argument("--embbeding_dim", default=config.training.embbeding_dim, type=two_args_str_int)
@@ -52,6 +54,7 @@ parser.add_argument("--l1weight", default=config.training.l1weight, type=two_arg
 parser.add_argument("--sparseKL", default=config.training.sparseKL, type=str2bool, nargs='?', const=False)
 parser.add_argument("--KL_distribval", default=config.training.KL_distribval, type=two_args_str_int)
 parser.add_argument("--initialisation", default=config.training.initialisation, choices=['random', 'predict_model'])
+parser.add_argument("--initialisation_eval", default=config.eval.initialisation, choices=['random', 'predict_model'])
 
 
 
@@ -86,15 +89,24 @@ torch.backends.cudnn.benchmark = False
 train_problems_loader = ProblemsLoader([args.train_dir + "/" + f for f in os.listdir(args.train_dir)])
 val_problems_loader = ProblemsLoader([args.val_dir + "/" + f for f in os.listdir(args.val_dir)])
 test_problems_loader = ProblemsLoader([args.test_dir + "/" + f for f in os.listdir(args.test_dir)])
-dataloaders = {'train': train_problems_loader, 'val': val_problems_loader, 'test': test_problems_loader,}
+dataloaders = {'train': train_problems_loader, 'val': val_problems_loader, 'test': test_problems_loader}
 
 model = NeuroSAT(args, device)
-net = torch.load(args.model, map_location=torch.device(device))
+net = torch.load(args.model1, map_location=torch.device(device))
 model.load_state_dict(net['state_dict'])
-
 model.eval()
-
-
 problems_test, train_filename = dataloaders["test"].get_next()
 
-solve_pb(problems_test, model, path_save_model)
+if args.initialisation_eval == "predict_model":
+    model2 = NeuroSAT2(args, model)
+    model2.to(device)
+    net = torch.load(args.model2, map_location=torch.device(device))
+    model2.load_state_dict(net['state_dict'])
+    model2.eval()
+    solve_pb(problems_test, model2, path_save_model)
+if args.initialisation_eval == "random":
+    solve_pb(problems_test, model, path_save_model)
+
+
+
+

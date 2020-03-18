@@ -40,7 +40,7 @@ def train_model(path, writer, model, dataloaders, criterion, optimizer, device, 
                 n_batches = len(problem.is_sat)
                 optimizer.zero_grad()
                 with torch.set_grad_enabled(phase == 'train'):
-                    outputs = model(problem)
+                    outputs = model(problem, phase)
                     target = torch.Tensor(problem.is_sat).float().to(model.L_init.weight.device)
                     outputs = sigmoid(outputs)
                     loss = criterion(outputs, target)

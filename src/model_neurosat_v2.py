@@ -96,9 +96,11 @@ class NeuroSAT2(nn.Module):
 
         #self.device = device
 
+        self.dico_init = {"train":{}, "test":{}, "val":{}, "eval":{}}
 
 
-    def forward(self, problem):
+
+    def forward(self, problem, phase= "test"):
         n_vars = problem.n_vars
         n_lits = problem.n_lits
         n_clauses = problem.n_clauses
@@ -108,25 +110,28 @@ class NeuroSAT2(nn.Module):
         ts_L_unpack_indices = torch.Tensor(problem.L_unpack_indices).t().long()
 
 
-        _, fl, fc = self.model1.find_solutions(problem, self.model1, "_", flag_plot=False)
-
-
+        #if phase is not "test":
+        if problem.dimacs[0] not in list(self.dico_init[phase].keys()):
+            _, fl, fc = self.model1.find_solutions(problem, self.model1, "_", flag_plot=False)
+            self.dico_init[phase][problem.dimacs[0]] = [fl, fc]
+        else:
+            [fl, fc] = self.dico_init[phase][problem.dimacs[0]]
 
         L_init = fl.unsqueeze(0)
         C_init = fc.unsqueeze(0)
 
-
+        #else:
         """
-        init_ts = self.init_ts.to(self.L_init.weight.device)
-        # 1 x n_lits x dim & 1 x n_clauses x dim
-        L_init = self.L_init(init_ts).view(1, 1, -1).to(self.L_init.weight.device)
-        # print(L_init.shape)
-        L_init = L_init.repeat(1, n_lits, 1)
-        moitie = int(n_lits/2)
-        L_init[:,:moitie,:] = -L_init[:,:moitie,:]
-        C_init = self.C_init(init_ts).view(1, 1, -1).to(self.L_init.weight.device)
-        # print(C_init.shape)
-        C_init = C_init.repeat(1, n_clauses, 1)
+            init_ts = self.init_ts.to(self.L_init.weight.device)
+            # 1 x n_lits x dim & 1 x n_clauses x dim
+            L_init = self.L_init(init_ts).view(1, 1, -1).to(self.L_init.weight.device)
+            # print(L_init.shape)
+            L_init = L_init.repeat(1, n_lits, 1)
+            moitie = int(n_lits/2)
+            L_init[:,:moitie,:] = -L_init[:,:moitie,:]
+            C_init = self.C_init(init_ts).view(1, 1, -1).to(self.L_init.weight.device)
+            # print(C_init.shape)
+            C_init = C_init.repeat(1, n_clauses, 1)
         """
 
 
@@ -209,7 +214,7 @@ class NeuroSAT2(nn.Module):
 
         with torch.set_grad_enabled(False):
 
-            _ = model(problem)
+            _ = model(problem, "eval")
 
             all_votes = model.all_votes
             final_lits = model.final_lits

@@ -11,7 +11,8 @@ path:
   val_dir: ./data/little_dataset_100p/3_5/val/pickle
   test_dir: ./data/little_dataset_100p/3_5/test/pickle
   logs_tensorboard : ./runs/test_1
-  model: ./models/0.95_best.pth.tar
+  model1: ./models/0.95_best.pth.tar
+  model2: /home/adriben/Documents/Recherche/Projets/Projet_SAT_solver/results_cloud/runs/test_1expe1/2020_03_17_19_53_37_897852/model_last.pth.tar
 
 generate_data:
   do_it: No
@@ -35,6 +36,9 @@ training:
   sparseKL: No
   KL_distribval: 0.1
   initialisation: predict_model #random, predict_model
+
+eval:
+  initialisation: random #random, predict_model
 
 
 

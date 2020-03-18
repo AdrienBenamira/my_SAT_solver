@@ -34,7 +34,7 @@ parser.add_argument("--train_dir", default=config.path.train_dir)
 parser.add_argument("--val_dir", default=config.path.val_dir)
 parser.add_argument("--test_dir", default=config.path.test_dir)
 parser.add_argument("--logs_tensorboard", default=config.path.logs_tensorboard)
-parser.add_argument("--model", default=config.path.model, type=dir_path)
+parser.add_argument("--model1", default=config.path.model1, type=dir_path)
 
 parser.add_argument("--n_epochs", default=config.training.n_epochs, type=two_args_str_int)
 parser.add_argument("--embbeding_dim", default=config.training.embbeding_dim, type=two_args_str_int)
@@ -85,7 +85,7 @@ model = NeuroSAT(args, device)
 
 if args.initialisation == "predict_model":
 
-    net = torch.load(args.model, map_location=torch.device(device))
+    net = torch.load(args.model1, map_location=torch.device(device))
     model.load_state_dict(net['state_dict'])
     model.eval()
     model2 = NeuroSAT2(args, model)
