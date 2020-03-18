@@ -110,18 +110,16 @@ class NeuroSAT2(nn.Module):
         ts_L_unpack_indices = torch.Tensor(problem.L_unpack_indices).t().long()
 
 
-        if phase is not "test":
+
+        if phase is "train" or phase is "val" or phase is "test" or phase is "eval":
             if problem.dimacs[0] not in list(self.dico_init[phase].keys()):
                 _, fl, fc = self.model1.find_solutions(problem, self.model1, "_", flag_plot=False)
                 self.dico_init[phase][problem.dimacs[0]] = [fl, fc]
             else:
                 [fl, fc] = self.dico_init[phase][problem.dimacs[0]]
-
             L_init = fl.unsqueeze(0)
             C_init = fc.unsqueeze(0)
-
         else:
-
             init_ts = self.init_ts.to(self.L_init.weight.device)
             # 1 x n_lits x dim & 1 x n_clauses x dim
             L_init = self.L_init(init_ts).view(1, 1, -1).to(self.L_init.weight.device)

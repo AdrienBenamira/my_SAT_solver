@@ -26,16 +26,16 @@ generate_data:
   p_geo: 0.4 # parametre pour loi geometric selon rmq 2 partie 4
 
 training:
-  n_epochs: 15
+  n_epochs: 1
   embbeding_dim: 128
   T : 26
   weight_decay: 0.0000000001
   lr: 0.00002
-  sparse: Yes
+  sparse: No
   l1weight: 0.001
   sparseKL: No
   KL_distribval: 0.1
-  initialisation: predict_model #random, predict_model
+  initialisation: random #random, predict_model
 
 eval:
   initialisation: predict_model #random, predict_model
