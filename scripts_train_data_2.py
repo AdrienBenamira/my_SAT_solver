@@ -17,7 +17,7 @@ for limit in ["7_10/"]:
 
 
     os.system(
-        'python3 main.py --n_epochs 5 --device ' + str(1) + ' --seed ' + str(seed) + ' --initialisation predict_model --sparse No --sparseKL No --train_dir '+path1+
+        'python3 main.py --n_epochs 5 --device ' + str(2) + ' --seed ' + str(seed) + ' --initialisation predict_model --sparse No --sparseKL No --train_dir '+path1+
         ' --test_dir '+path2+' --val_dir ' +path3)
 
     print()
