@@ -2,7 +2,7 @@ general:
   seed: 0
   task_name: expe1
   device: 0
-  nbre_plot: 10
+  nbre_plot: 0
 
 path:
   dimacs_dir: ./data/little_dataset_100p/3_5/train/dimacs
@@ -38,7 +38,7 @@ training:
   initialisation: predict_model #random, predict_model
 
 eval:
-  initialisation: random #random, predict_model
+  initialisation: predict_model #random, predict_model
 
 
 
