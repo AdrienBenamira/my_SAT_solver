@@ -91,13 +91,13 @@ val_problems_loader = ProblemsLoader([args.val_dir + "/" + f for f in os.listdir
 test_problems_loader = ProblemsLoader([args.test_dir + "/" + f for f in os.listdir(args.test_dir)])
 dataloaders = {'train': train_problems_loader, 'val': val_problems_loader, 'test': test_problems_loader}
 
-model = NeuroSAT(args, device)
-net = torch.load(args.model1, map_location=torch.device(device))
-model.load_state_dict(net['state_dict'])
-model.eval()
-problems_test, train_filename = dataloaders["test"].get_next()
 
 if args.initialisation_eval == "predict_model":
+    model = NeuroSAT(args, device)
+    net = torch.load(args.model1, map_location=torch.device(device))
+    model.load_state_dict(net['state_dict'])
+    model.eval()
+    problems_test, train_filename = dataloaders["test"].get_next()
     model2 = NeuroSAT2(args, model)
     model2.to(device)
     net = torch.load(args.model2, map_location=torch.device(device))
@@ -105,6 +105,12 @@ if args.initialisation_eval == "predict_model":
     model2.eval()
     solve_pb(problems_test, model2, path_save_model)
 if args.initialisation_eval == "random":
+    model = NeuroSAT(args, device)
+    net = torch.load(args.model2, map_location=torch.device(device))
+    model.load_state_dict(net['state_dict'])
+    model.eval()
+    problems_test, train_filename = dataloaders["test"].get_next()
+
     solve_pb(problems_test, model, path_save_model)
 
 

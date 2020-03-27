@@ -2,17 +2,17 @@ general:
   seed: 0
   task_name: expe1
   device: 0
-  nbre_plot: 10
+  nbre_plot: 0
 
 path:
   dimacs_dir: ./data/little_dataset_100p/3_5/train/dimacs
   out_dir: ./data/little_dataset_100p/3_5/train/pickle
-  train_dir: ./data/little_dataset_100p/7_10/train/pickle
-  val_dir: ./data/little_dataset_100p/7_10/val/pickle
-  test_dir: ./data/little_dataset_100p/7_10/test/pickle
+  train_dir: ./data/little_dataset_100p/12_15/train/pickle
+  val_dir: ./data/little_dataset_100p/12_15/val/pickle
+  test_dir: ./data/little_dataset_100p/12_15/test/pickle
   logs_tensorboard : ./runs/test_1
   model1: ./models/0.95_best.pth.tar
-  model2: /home/adriben/Documents/Recherche/Projets/Projet_SAT_solver/results_cloud/runs/test_1expe1/2020_03_17_19_53_37_897852/model_last.pth.tar
+  model2: /home/adriben/Documents/Recherche/Projets/Projet_SAT_solver/results_cloud/runs/test_1expe1/2020_03_18_11_47_46_335244/model_last.pth.tar
 
 generate_data:
   do_it: No
