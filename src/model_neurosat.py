@@ -7,6 +7,7 @@ from sklearn.decomposition import PCA
 
 
 
+
 class MLP(nn.Module):
   def __init__(self, in_dim, hidden_dim, out_dim):
     super(MLP, self).__init__()
@@ -332,6 +333,8 @@ class NeuroSAT(nn.Module):
 
 
 import matplotlib
+matplotlib.use('Agg')
+
 import matplotlib.pyplot as plt
 import numpy as np
 import imageio
@@ -364,6 +367,7 @@ def plot_for_offset(pca_train, X2,n_batches, n_vars_per_batch, d, batch, key_acp
            title='PCA on L at time ' + str(key_acp) + " with answer : " + str(solutions[-1]))
 
     # Used to return the plot as an image rray
+
     fig.canvas.draw()       # draw the canvas, cache the renderer
     image = np.frombuffer(fig.canvas.tostring_rgb(), dtype='uint8')
     image  = image.reshape(fig.canvas.get_width_height()[::-1] + (3,))

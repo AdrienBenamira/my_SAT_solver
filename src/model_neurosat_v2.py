@@ -3,33 +3,33 @@ from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 
 
-
-
-
-
 class MLP(nn.Module):
-  def __init__(self, in_dim, hidden_dim, out_dim):
-    super(MLP, self).__init__()
-    self.l1 = nn.Linear(in_dim, hidden_dim)
-    self.l2 = nn.Linear(hidden_dim, hidden_dim)
-    self.l3 = nn.Linear(hidden_dim, out_dim)
+    def __init__(self, in_dim, hidden_dim, out_dim):
+        super(MLP, self).__init__()
+        self.l1 = nn.Linear(in_dim, hidden_dim)
+        self.l2 = nn.Linear(hidden_dim, hidden_dim)
+        self.l3 = nn.Linear(hidden_dim, out_dim)
 
-  def forward(self, x):
-    x = self.l1(x)
-    x = self.l2(x)
-    x = self.l3(x)
+    def forward(self, x):
+        x = self.l1(x)
+        x = self.l2(x)
+        x = self.l3(x)
 
-    return x
+        return x
+
 
 import torch
 from torch.autograd import Function
 
-def kl_divergence(p, p_hat):
+
+def kl_divergence(p, p_hat, device):
     funcs = nn.Sigmoid()
     p_hat = funcs(p_hat)
-    p_tensor = p_hat.clone()
+    p_tensor = p_hat.clone().to(device)
     p_tensor.data.fill_(p)
-    return p_tensor * torch.log(p_tensor) - p_tensor * torch.log(p_hat) + (1 - p_tensor) * torch.log(1 - p_tensor) - (1 - p_tensor) * torch.log(1 - p_hat)
+    return p_tensor * torch.log(p_tensor) - p_tensor * torch.log(p_hat) + (1 - p_tensor) * torch.log(1 - p_tensor) - (
+                1 - p_tensor) * torch.log(1 - p_hat)
+
 
 class L1Penalty(Function):
 
@@ -42,9 +42,10 @@ class L1Penalty(Function):
     @staticmethod
     def backward(ctx, grad_output):
         input, = ctx.saved_variables
-        grad_input = input.clone().sign().mul(ctx.l1weight)
+        grad_input = input.clone().sign().mul(ctx.l1weight).to(input.device)
         grad_input += grad_output
         return grad_input, None
+
 
 class KLpenalty(Function):
 
@@ -57,16 +58,16 @@ class KLpenalty(Function):
     @staticmethod
     def backward(ctx, grad_output):
         input, = ctx.saved_variables
-        grad_input = kl_divergence(ctx.l1weight, input.clone())
+        grad_input = kl_divergence(ctx.l1weight, input.clone(), input.device).to(input.device)
         grad_input += grad_output
         return grad_input, None
 
 
 class NeuroSAT2(nn.Module):
-    def __init__(self, args, model1):
+    def __init__(self, args, device):
         super(NeuroSAT2, self).__init__()
         self.args = args
-        
+
         d = self.args.embbeding_dim
         self.d = d
         self.l1weight = args.l1weight
@@ -91,16 +92,11 @@ class NeuroSAT2(nn.Module):
         self.denom = torch.sqrt(torch.Tensor([self.d]))
 
         self.compteur_plot = 0
+        self.pca_train = None
 
-        self.model1 = model1
+        # self.device = device
 
-        #self.device = device
-
-        self.dico_init = {"train":{}, "test":{}, "val":{}, "eval":{}}
-
-
-
-    def forward(self, problem, phase= "test"):
+    def forward(self, problem, phase=None):
         n_vars = problem.n_vars
         n_lits = problem.n_lits
         n_clauses = problem.n_clauses
@@ -109,29 +105,16 @@ class NeuroSAT2(nn.Module):
 
         ts_L_unpack_indices = torch.Tensor(problem.L_unpack_indices).t().long()
 
-
-
-        if phase is "train" or phase is "val" or phase is "test" or phase is "eval":
-            #if problem.dimacs[0] not in list(self.dico_init[phase].keys()):
-            _, fl, fc = self.model1.find_solutions(problem, self.model1, "_", flag_plot=False)
-            #   self.dico_init[phase][problem.dimacs[0]] = [fl, fc]
-            #else:
-            #    [fl, fc] = self.dico_init[phase][problem.dimacs[0]]
-            L_init = fl.unsqueeze(0)
-            C_init = fc.unsqueeze(0)
-        else:
-            init_ts = self.init_ts.to(self.L_init.weight.device)
-            # 1 x n_lits x dim & 1 x n_clauses x dim
-            L_init = self.L_init(init_ts).view(1, 1, -1).to(self.L_init.weight.device)
-            # print(L_init.shape)
-            L_init = L_init.repeat(1, n_lits, 1)
-            moitie = int(n_lits/2)
-            L_init[:,:moitie,:] = -L_init[:,:moitie,:]
-            C_init = self.C_init(init_ts).view(1, 1, -1).to(self.L_init.weight.device)
-            # print(C_init.shape)
-            C_init = C_init.repeat(1, n_clauses, 1)
-
-
+        init_ts = self.init_ts.to(self.L_init.weight.device)
+        # 1 x n_lits x dim & 1 x n_clauses x dim
+        L_init = self.L_init(init_ts).view(1, 1, -1).to(self.L_init.weight.device)
+        # print(L_init.shape)
+        L_init = L_init.repeat(1, n_lits, 1)
+        moitie = int(n_lits / 2)
+        L_init[:, :moitie, :] = -L_init[:, :moitie, :]
+        C_init = self.C_init(init_ts).view(1, 1, -1).to(self.L_init.weight.device)
+        # print(C_init.shape)
+        C_init = C_init.repeat(1, n_clauses, 1)
 
         # print(L_init.shape, C_init.shape)
 
@@ -140,29 +123,35 @@ class NeuroSAT2(nn.Module):
         L_unpack = torch.sparse.FloatTensor(ts_L_unpack_indices, torch.ones(problem.n_cells),
                                             torch.Size([n_lits, n_clauses])).to_dense().to(self.L_init.weight.device)
 
-
         self.acp_dico = {str(index_T): None for index_T in range(self.args.T)}
 
         for index_T in range(self.args.T):
             # n_lits x dim
+            #print(L_state[0].shape)
             L_hidden = L_state[0].squeeze(0)
             L_pre_msg = self.L_msg(L_hidden)
+            #print(L_hidden.shape, L_pre_msg.shape, L_unpack.t().shape)
             # (n_clauses x n_lits) x (n_lits x dim) = n_clauses x dim
             LC_msg = torch.matmul(L_unpack.t(), L_pre_msg)
-            # print(L_hidden.shape, L_pre_msg.shape, LC_msg.shape)
 
-            _, C_state = self.C_update(LC_msg.unsqueeze(0), C_state)
+            #print(LC_msg.shape)
+
+
+            #_, C_state = self.C_update(LC_msg.unsqueeze(0), C_state)
             # print('C_state',C_state[0].shape, C_state[1].shape)
 
             # n_clauses x dim
-            C_hidden = C_state[0].squeeze(0)
-            C_pre_msg = self.C_msg(C_hidden)
-            # (n_lits x n_clauses) x (n_clauses x dim) = n_lits x dim
-            CL_msg = torch.matmul(L_unpack, C_pre_msg)
-            # print(C_hidden.shape, C_pre_msg.shape, CL_msg.shape)
+            #C_hidden = C_state[0].squeeze(0)
+            C_pre_msg = self.C_msg(LC_msg)
+            #print(C_pre_msg.shape)
 
-            _, L_state = self.L_update(
-                torch.cat([CL_msg, self.flip(L_state[0].squeeze(0), n_vars)], dim=1).unsqueeze(0), L_state)
+            # (n_lits x n_clauses) x (n_clauses x dim) = n_lits x dim
+            L_state = [torch.matmul(L_unpack, C_pre_msg).unsqueeze(0), 1]
+            #print(L_state[0].shape)
+            # print(C_hidden.shape, C_pre_msg.shape, CL_msg.shape)
+            #print("OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO")
+            #_, L_state = self.L_update(
+            #    torch.cat([CL_msg, self.flip(L_state[0].squeeze(0), n_vars)], dim=1).unsqueeze(0), L_state)
             # print('L_state',C_state[0].shape, C_state[1].shape)
 
             if str(index_T) in self.acp_dico.keys():
@@ -171,21 +160,17 @@ class NeuroSAT2(nn.Module):
             logits = L_state[0].squeeze(0)
             clauses = C_state[0].squeeze(0)
 
-
-
             if self.args.sparse:
                 logits = L1Penalty.apply(logits, self.l1weight)
-                #clauses = L1Penalty.apply(clauses, self.l1weight)
+                # clauses = L1Penalty.apply(clauses, self.l1weight)
             if self.args.sparseKL:
                 logits = KLpenalty.apply(logits, self.KL_distribval)
-
-
-
 
         vote = self.L_vote(logits)
 
         self.all_votes = vote
         self.final_lits = logits
+        self.final_clauses = clauses
         # print('vote', vote.shape)
         vote_join = torch.cat([vote[:n_vars, :], vote[n_vars:, :]], dim=1)
         # print('vote_join', vote_join.shape)
@@ -198,12 +183,13 @@ class NeuroSAT2(nn.Module):
     def flip(self, msg, n_vars):
         return torch.cat([msg[n_vars:2 * n_vars, :], msg[:n_vars, :]], dim=0)
 
-
-    def find_solutions(self, problem, model, path, flag_plot = True):
+    def find_solutions(self, problem, model, path, flag_plot=True):
 
         def flip_vlit(vlit):
-            if vlit < problem.n_vars: return vlit + problem.n_vars
-            else: return vlit - problem.n_vars
+            if vlit < problem.n_vars:
+                return vlit + problem.n_vars
+            else:
+                return vlit - problem.n_vars
 
         n_batches = len(problem.is_sat)
         n_vars_per_batch = problem.n_vars // n_batches
@@ -212,24 +198,30 @@ class NeuroSAT2(nn.Module):
 
         with torch.set_grad_enabled(False):
 
-            _ = model(problem, "eval")
+            _ = model(problem)
 
             all_votes = model.all_votes
             final_lits = model.final_lits
-            #all_votes, final_lits, _, _ = self.sess.run([self.all_votes, self.final_lits, self.logits, self.predict_costs], feed_dict=d)
+            final_clauses = model.final_clauses
+            # all_votes, final_lits, _, _ = self.sess.run([self.all_votes, self.final_lits, self.logits, self.predict_costs], feed_dict=d)
 
             solutions = []
+            target = np.array(problem.is_sat)
             for batch in range(len(problem.is_sat)):
+
+                # if target[batch]:
                 decode_cheap_A = (lambda vlit: all_votes[vlit, 0] > all_votes[flip_vlit(vlit), 0])
                 decode_cheap_B = (lambda vlit: not decode_cheap_A(vlit))
 
-
-
                 def reify(phi):
-                    xs = list(zip([phi(vlit) for vlit in range(batch * n_vars_per_batch, (batch+1) * n_vars_per_batch)],
-                                  [phi(flip_vlit(vlit)) for vlit in range(batch * n_vars_per_batch, (batch+1) * n_vars_per_batch)]))
+                    xs = list(
+                        zip([phi(vlit) for vlit in range(batch * n_vars_per_batch, (batch + 1) * n_vars_per_batch)],
+                            [phi(flip_vlit(vlit)) for vlit in
+                             range(batch * n_vars_per_batch, (batch + 1) * n_vars_per_batch)]))
+
                     def one_of(a, b): return (a and (not b)) or (b and (not a))
-                    assert(all([one_of(x[0], x[1]) for x in xs]))
+
+                    assert (all([one_of(x[0], x[1]) for x in xs]))
                     return [x[0] for x in xs]
 
                 if self.solves(problem, batch, decode_cheap_A):
@@ -248,14 +240,14 @@ class NeuroSAT2(nn.Module):
                     scores = distances * distances
 
                     def proj_vlit_flit(vlit):
-                        if vlit < problem.n_vars: return vlit - batch * n_vars_per_batch
-                        else:                     return ((vlit - problem.n_vars) - batch * n_vars_per_batch) + n_vars_per_batch
+                        if vlit < problem.n_vars:
+                            return vlit - batch * n_vars_per_batch
+                        else:
+                            return ((vlit - problem.n_vars) - batch * n_vars_per_batch) + n_vars_per_batch
 
                     def decode_kmeans_A(vlit):
                         return scores[proj_vlit_flit(vlit), 0] + scores[proj_vlit_flit(flip_vlit(vlit)), 1] > \
-                            scores[proj_vlit_flit(vlit), 1] + scores[proj_vlit_flit(flip_vlit(vlit)), 0]
-
-
+                               scores[proj_vlit_flit(vlit), 1] + scores[proj_vlit_flit(flip_vlit(vlit)), 0]
 
                     decode_kmeans_B = (lambda vlit: not decode_kmeans_A(vlit))
 
@@ -268,36 +260,40 @@ class NeuroSAT2(nn.Module):
                     else:
                         solutions.append(None)
 
-
-
                     if solutions[-1] is not None:
                         if self.compteur_plot < self.args.nbre_plot:
                             if flag_plot:
-                                self.compteur_plot+=1
-
+                                self.compteur_plot += 1
                                 liste_plot = []
 
-                                key_acp = list(model.acp_dico.keys())[-1]
+                                if self.pca_train is None:
 
-                                X2 = model.acp_dico[key_acp]
-
-                                L = np.reshape(X2.cpu(), [2 * n_batches, n_vars_per_batch, self.d])
-                                L = np.concatenate([L[batch, :, :], L[n_batches + batch, :, :]], axis=0)
-
-                                X = L
-
-                                pca = PCA(n_components=2)
-                                pca_train = pca.fit(X)
-
-                                for key_acp in model.acp_dico.keys():
+                                    key_acp = list(model.acp_dico.keys())[-1]
 
                                     X2 = model.acp_dico[key_acp]
 
-                                    liste_plot.append(plot_for_offset(pca_train, X2,n_batches, n_vars_per_batch, self.d, batch, key_acp, solutions))
+                                    L = np.reshape(X2.cpu(), [2 * n_batches, n_vars_per_batch, self.d])
+                                    L = np.concatenate([L[batch, :, :], L[n_batches + batch, :, :]], axis=0)
 
-                                imageio.mimsave(path + '/'+str(self.compteur_plot)+'_ACP_'+str(problem.dimacs[batch])+'.gif', liste_plot, fps=2)
+                                    X = L
 
-        return solutions, L, final_lits
+                                    pca = PCA(n_components=2)
+                                    pca_train = pca.fit(X)
+                                    self.pca_train = pca_train
+                                else:
+                                    pca_train = self.pca_train
+
+                                for key_acp in model.acp_dico.keys():
+                                    X2 = model.acp_dico[key_acp]
+
+                                    liste_plot.append(
+                                        plot_for_offset(pca_train, X2, n_batches, n_vars_per_batch, self.d, batch,
+                                                        key_acp, solutions))
+
+                                imageio.mimsave(path + '/' + str(self.compteur_plot) + '_ACP_' + str(
+                                    problem.dimacs[batch]) + '.gif', liste_plot, fps=2)
+
+        return solutions, final_lits, final_clauses
 
     def solves(self, problem, batch, phi):
         start_cell = sum(problem.n_cells_per_batch[0:batch])
@@ -323,7 +319,7 @@ class NeuroSAT2(nn.Module):
 
             if not current_clause_satisfied:
                 vlit = problem.L_unpack_indices[cell, 0]
-                #print("[%d] %d" % (batch, vlit))
+                # print("[%d] %d" % (batch, vlit))
                 if phi(vlit):
                     current_clause_satisfied = True
 
@@ -333,13 +329,15 @@ class NeuroSAT2(nn.Module):
 
 
 import matplotlib
+
+matplotlib.use('Agg')
+
 import matplotlib.pyplot as plt
 import numpy as np
 import imageio
 
-def plot_for_offset(pca_train, X2,n_batches, n_vars_per_batch, d, batch, key_acp, solutions):
 
-
+def plot_for_offset(pca_train, X2, n_batches, n_vars_per_batch, d, batch, key_acp, solutions):
     L = np.reshape(X2.cpu(), [2 * n_batches, n_vars_per_batch, d])
     L = np.concatenate([L[batch, :, :], L[n_batches + batch, :, :]], axis=0)
 
@@ -357,17 +355,19 @@ def plot_for_offset(pca_train, X2,n_batches, n_vars_per_batch, d, batch, key_acp
 
     for color, i, target_name in zip(colors, [0, 1], target_names):
         ax.scatter(X_r[y == i, 0], X_r[y == i, 1], color=color, alpha=.8, lw=lw,
-                    label=target_name)
+                   label=target_name)
     ax.set_ylim(-10, 10)
     ax.set_xlim(-10, 10)
     plt.legend(loc='best', shadow=False, scatterpoints=1)
-    ax.set(xlabel='Composante 1', ylabel='Composante 2',
+    ax.set(xlabel='Composante 1 with explained variance ratio (%) ' + str(100 * pca_train.explained_variance_ratio_[0]),
+           ylabel='Composante 2 variance ratio (%) ' + str(pca_train.explained_variance_ratio_[1]),
            title='PCA on L at time ' + str(key_acp) + " with answer : " + str(solutions[-1]))
 
     # Used to return the plot as an image rray
-    fig.canvas.draw()       # draw the canvas, cache the renderer
+
+    fig.canvas.draw()  # draw the canvas, cache the renderer
     image = np.frombuffer(fig.canvas.tostring_rgb(), dtype='uint8')
-    image  = image.reshape(fig.canvas.get_width_height()[::-1] + (3,))
+    image = image.reshape(fig.canvas.get_width_height()[::-1] + (3,))
 
     return image
 

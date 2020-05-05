@@ -1,5 +1,4 @@
 from tqdm import tqdm
-
 from src.model_neurosat_v2 import NeuroSAT2
 from utils.config import Config
 import PyMiniSolvers.minisolvers as minisolvers
@@ -17,8 +16,9 @@ from utils.utils import str2bool, dir_path, two_args_str_int
 import time
 
 
-config = Config()
 
+
+config = Config()
 # initiate the parser
 parser = argparse.ArgumentParser()
 
@@ -42,7 +42,7 @@ parser.add_argument("--val_dir", default=config.path.val_dir)
 parser.add_argument("--test_dir", default=config.path.test_dir)
 parser.add_argument("--logs_tensorboard", default=config.path.logs_tensorboard)
 parser.add_argument("--model1", default=config.path.model1, type=dir_path)
-parser.add_argument("--model2", default=config.path.model2, type=dir_path)
+parser.add_argument("--model2", default=config.path.model2)
 
 parser.add_argument("--n_epochs", default=config.training.n_epochs, type=two_args_str_int)
 parser.add_argument("--embbeding_dim", default=config.training.embbeding_dim, type=two_args_str_int)
