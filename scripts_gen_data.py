@@ -18,6 +18,12 @@ os.system('mkdir ./data/little_dataset_100p/12_15')
 os.system('mkdir ./data/little_dataset_100p/12_15/train')
 os.system('mkdir ./data/little_dataset_100p/12_15/val')
 os.system('mkdir ./data/little_dataset_100p/12_15/test')
+
+os.system('mkdir ./data/little_dataset_100p/10_40')
+os.system('mkdir ./data/little_dataset_100p/10_40/train')
+os.system('mkdir ./data/little_dataset_100p/10_40/val')
+os.system('mkdir ./data/little_dataset_100p/10_40/test')
+
 os.system('mkdir ./data/dataset_10000p')
 os.system('mkdir ./data/dataset_10000p/3_5')
 os.system('mkdir ./data/dataset_10000p/3_5/train')
@@ -32,12 +38,17 @@ os.system('mkdir ./data/dataset_10000p/12_15/train')
 os.system('mkdir ./data/dataset_10000p/12_15/val')
 os.system('mkdir ./data/dataset_10000p/12_15/test')
 
+os.system('mkdir ./data/dataset_10000p/10_40')
+os.system('mkdir ./data/dataset_10000p/10_40/train')
+os.system('mkdir ./data/dataset_10000p/10_40/val')
+os.system('mkdir ./data/dataset_10000p/10_40/test')
+
 for n_pairs in ["little_dataset_100p/", "dataset_10000p/"]:
     if n_pairs == "little_dataset_100p/":
         n_pairsn = 100
     if n_pairs == "dataset_10000p/":
         n_pairsn = 100000
-    for limit in ["3_5/", "7_10/", "12_15/"]:
+    for limit in ["3_5/", "7_10/", "12_15/", "10_40/"]:
         if limit=="3_5/":
             min_nn = 3
             max_nn = 5
@@ -47,15 +58,21 @@ for n_pairs in ["little_dataset_100p/", "dataset_10000p/"]:
         if limit=="12_15/":
             min_nn = 12
             max_nn = 15
+        if limit=="10_40/":
+            min_nn = 10
+            max_nn = 40
+            n_pairsn = 1000000
         for dos in ["train/", "val/", "test/"]:
-            if dos == "val" and n_pairsn == 100000:
+            if dos == "val" and n_pairsn > 100000:
                 n_pairsn = n_pairsn/10
-            if dos == "test" and n_pairsn == 100000:
+            if dos == "test" and n_pairsn > 100000:
                 n_pairsn = n_pairsn / 10
             if dos == "train":
                 if n_pairsn > 100:
                     if n_pairsn != 100000:
                         n_pairsn = 100000
+                    if limit == "10_40/":
+                        n_pairsn = 1000000
             seed = random.randint(0,100)
             path1 = "./data/"+n_pairs+limit+dos+"dimacs"
             path2 = "./data/" + n_pairs + limit + dos + "pickle"

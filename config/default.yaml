@@ -9,7 +9,7 @@ path:
   out_dir: ./data/dataset_10000p/3_5/train/pickle
   train_dir: ./data/dataset_10000p/12_15/train/pickle
   val_dir: ./data/dataset_10000p/12_15/val/pickle
-  test_dir: ./data/dataset_10000p/12_15/test/pickle
+  test_dir: data/test_pickle
   logs_tensorboard : ./runs/test_1
   model1: ./models/0.95_best.pth.tar
   model2: ./models/0.95_best.pth.tar
@@ -22,7 +22,7 @@ generate_data:
   max_nodes_per_batch: 12000 #We batched multiple problems together,
                             #with each batch containingup to XXX nodes (i.e.literals plus clauses)
   one: 0 # ?
-  p_k_2: 0.3 # parametre pour loi bernouilli selon rmq 2 partie 4 (1-0.7 = 0.3)
+  p_k_2: 0.7 # parametre pour loi bernouilli selon rmq 2 partie 4 (1-0.7 = 0.3)
   p_geo: 0.4 # parametre pour loi geometric selon rmq 2 partie 4
 
 training:

@@ -1,5 +1,25 @@
+import argparse
+
+from utils.config import Config
+import PyMiniSolvers.minisolvers as minisolvers
 import random
 import numpy as np
+import os
+import time
+from utils.create_database_random import DataGenerator, ProblemsLoader
+import torch
+from src.model_neurosat import *
+from torch.utils.tensorboard import SummaryWriter
+from src.trainer import train_model
+from utils.utils import str2bool, dir_path, two_args_str_int
+import os
+import math
+import numpy as np
+import random
+import argparse
+import pickle
+from utils.create_database_random import DataGenerator
+config = Config()
 
 np.random.seed(0)
 
@@ -329,72 +349,171 @@ L = 2                               #largeur
 D = 2                              #Profondeur
 nr = D-1                            #Nbre de round
 n = L * D                           #nbre totales de sbox
-tau = 2                             #Nbre max de Sbox active
+tau = 1                            #Nbre max de Sbox active
+
+assert tau < n + 1
+
 add_confition_input_output = False
 
+nbre_sample_bin = np.random.randint(0, 2 ** L, np.random.randint(1, 16, 1))
+
+print(nbre_sample_bin)
+
 if not add_confition_input_output:
-    initialisation = [[1],[9]]
+    initialisation = []
+    for nbre_sample_bin_u_index, nbre_sample_bin_u in enumerate(nbre_sample_bin):
+        initialisation.append([nbre_sample_bin_u + 1])
+print(initialisation)
 
-res_all = []
+for nbre_sample_tau in range(1, n):
+
+    res_all = []
 
 
+    for sbox in range(L * D):
+        res_all += une_sbox(sbox + 1, L, D)
+    res_all += compteur(L, D, nbre_sample_tau)
+    if D >1:
+        if L == 4:
+            res_all += lien_entre_couche_v16bits(D)
+        elif L ==2 and not add_confition_input_output:
+            res_all += lien_entre_couche_v8bits(D)
+        else:
+            print("error")
 
-
-for sbox in range(L * D):
-    res_all += une_sbox(sbox + 1, L, D)
-res_all += compteur(L, D, tau)
-if D >1:
-    if L == 4:
-        res_all += lien_entre_couche_v16bits(D)
-    elif L ==2 and not add_confition_input_output:
-        res_all += lien_entre_couche_v8bits(D)
+    if add_confition_input_output:
+        ct0 = np.random.randint(0, 15, L)
+        key = np.random.randint(0, 15, L)
+        ct0_origin = ct0.copy()
+        ctc0 = Encrypt(ct0, key, nr);
+        ct0_bin = []
+        for i in range(4):
+            ct0_bin += [int(x) for x in list('{:04b}'.format(ct0_origin[i]))]
+        ctc0_bin = []
+        for i in range(4):
+            ctc0_bin += [int(x) for x in list('{:04b}'.format(ctc0[i]))]
+        res_all += input_output_egalite(ct0_bin, ctc0_bin, L, D)
     else:
-        print("error")
-
-if add_confition_input_output:
-    ct0 = np.random.randint(0, 15, L)
-    key = np.random.randint(0, 15, L)
-    ct0_origin = ct0.copy()
-    ctc0 = Encrypt(ct0, key, nr);
-    ct0_bin = []
-    for i in range(4):
-        ct0_bin += [int(x) for x in list('{:04b}'.format(ct0_origin[i]))]
-    ctc0_bin = []
-    for i in range(4):
-        ctc0_bin += [int(x) for x in list('{:04b}'.format(ctc0[i]))]
-    res_all += input_output_egalite(ct0_bin, ctc0_bin, L, D)
-else:
-    res_all += initialisation
+        res_all += initialisation
 
 
-max_all = [max(cluase) for cluase in res_all]
+    max_all = [max(cluase) for cluase in res_all]
 
-print("NBRE DE CLAUSES: ", len(res_all))
-print("NBRE DE VARIABLES: ", max(max_all))
-n_vars = max(max_all)
-print("RATIO : ", len(res_all) / max(max_all))
-
-
-import PyMiniSolvers.minisolvers as minisolvers
-solver = minisolvers.MinisatSolver()
-for i in range(max(max_all)): solver.new_var(dvar=True)
-for iclause in res_all:
-    solver.add_clause(iclause)
-
-is_sat = solver.solve()
-print("IS THE PROBLEM SAT ? ", is_sat)
-if is_sat:
-    print()
-    print(list(solver.get_model()))
-
-def write_dimacs_to(n_vars, res_all, out_filename):
-    with open(out_filename, 'w') as f:
-        f.write("p cnf %d %d\n" % (n_vars, len(res_all)))
-        for c in res_all:
-            for x in c:
-                f.write("%d " % x)
-            f.write("0\n")
+    print("NBRE DE CLAUSES: ", len(res_all))
+    print("NBRE DE VARIABLES: ", max(max_all))
+    n_vars = max(max_all)
+    print("RATIO : ", len(res_all) / max(max_all))
 
 
-out_filename = "./test.txt"
-write_dimacs_to(n_vars, res_all, out_filename)
+    import PyMiniSolvers.minisolvers as minisolvers
+    solver = minisolvers.MinisatSolver()
+    for i in range(max(max_all)): solver.new_var(dvar=True)
+    for iclause in res_all:
+        solver.add_clause(iclause)
+
+    is_sat = solver.solve()
+    print("IS THE PROBLEM SAT ? ", is_sat)
+    if is_sat:
+        print()
+        print(list(solver.get_model()))
+
+
+    def write_dimacs_to(n_vars, res_all, out_filename):
+        with open(out_filename, 'w') as f:
+            f.write("p cnf %d %d\n" % (n_vars, len(res_all)))
+            for c in res_all:
+                for x in c:
+                    f.write("%d " % x)
+                f.write("0\n")
+
+    out_filename = "data/test_dimacs/test_"+str(nbre_sample_tau)+".txt"
+    write_dimacs_to(n_vars, res_all, out_filename)
+
+parser = argparse.ArgumentParser()
+
+parser.add_argument("--seed", default=config.general.seed, type=two_args_str_int)
+parser.add_argument("--task_name", default=config.general.task_name)
+parser.add_argument("--device", default=config.general.device, type=two_args_str_int, choices=[0, 1, 2, 3])
+parser.add_argument("--nbre_plot", default=config.general.nbre_plot, type=two_args_str_int)
+
+parser.add_argument("--do_it", default=config.generate_data.do_it, type=str2bool, nargs='?', const=False)
+parser.add_argument("--n_pairs", default=config.generate_data.n_pairs, type=two_args_str_int)
+parser.add_argument("--min_n", default=config.generate_data.min_n, type=two_args_str_int)
+parser.add_argument("--max_n", default=config.generate_data.max_n, type=two_args_str_int)
+parser.add_argument("--max_nodes_per_batch", default=config.generate_data.max_nodes_per_batch, type=two_args_str_int)
+parser.add_argument("--one", default=config.generate_data.one, type=two_args_str_int)
+parser.add_argument("--p_k_2", default=config.generate_data.p_k_2, type=two_args_str_int)
+parser.add_argument("--p_geo", default=config.generate_data.p_geo, type=two_args_str_int)
+
+parser.add_argument("--dimacs_dir", default=config.path.dimacs_dir)
+parser.add_argument("--out_dir", default=config.path.out_dir)
+parser.add_argument("--train_dir", default=config.path.train_dir)
+parser.add_argument("--val_dir", default=config.path.val_dir)
+parser.add_argument("--test_dir", default=config.path.test_dir)
+parser.add_argument("--logs_tensorboard", default=config.path.logs_tensorboard)
+
+args = parser.parse_args()
+
+
+
+args.dimacs_dir = "data/test_dimacs"
+args.out_dir = "data/test_pickle"
+
+dg = DataGenerator(args, minisolvers)
+
+problems = []
+batches = []
+n_nodes_in_batch = 0
+
+filenames = os.listdir(dg.config.dimacs_dir)
+
+# to improve batching
+filenames = sorted(filenames)
+
+prev_n_vars = None
+
+for filename in filenames:
+    #print(filename)
+    n_vars, iclauses = dg.parse_dimacs("%s/%s" % (dg.config.dimacs_dir, filename))
+    n_clauses = len(iclauses)
+    n_cells = sum([len(iclause) for iclause in iclauses])
+
+    n_nodes = 2 * n_vars + n_clauses
+    if n_nodes > dg.config.max_nodes_per_batch:
+        continue
+
+    batch_ready = False
+    if (dg.config.one and len(problems) > 0):
+        batch_ready = True
+    elif (prev_n_vars and n_vars != prev_n_vars):
+        batch_ready = True
+    elif (not dg.config.one) and n_nodes_in_batch + n_nodes > dg.config.max_nodes_per_batch:
+        batch_ready = True
+
+    if batch_ready:
+        batches.append(dg.mk_batch_problem(problems))
+        print("batch %d done (%d vars, %d problems)...\n" % (len(batches), prev_n_vars, len(problems)))
+        del problems[:]
+        n_nodes_in_batch = 0
+
+    prev_n_vars = n_vars
+
+    is_sat, stats = dg.solve_sat(n_vars, iclauses)
+    #print(filename, n_vars, iclauses, is_sat)
+
+    problems.append((filename, n_vars, iclauses, is_sat))
+    n_nodes_in_batch += n_nodes
+
+if len(problems) > 0:
+    batches.append(dg.mk_batch_problem(problems))
+    print("batch %d done (%d vars, %d problems)...\n" % (len(batches), n_vars, len(problems)))
+    del problems[:]
+
+# create directory
+if not os.path.exists(dg.config.out_dir):
+    os.mkdir(dg.config.out_dir)
+
+dataset_filename = dg.mk_dataset_filename(dg.config, len(batches))
+print("Writing %d batches to %s...\n" % (len(batches), dataset_filename))
+with open(dataset_filename, 'wb') as f_dump:
+    pickle.dump(batches, f_dump)
