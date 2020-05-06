@@ -48,6 +48,8 @@ for n_pairs in ["little_dataset_100p/", "dataset_10000p/"]:
         n_pairsn = 100
     if n_pairs == "dataset_10000p/":
         n_pairsn = 100000
+        if limit == "10_40/":
+            n_pairsn = 1000000
     for limit in ["3_5/", "7_10/", "12_15/", "10_40/"]:
         if limit=="3_5/":
             min_nn = 3
@@ -61,7 +63,7 @@ for n_pairs in ["little_dataset_100p/", "dataset_10000p/"]:
         if limit=="10_40/":
             min_nn = 10
             max_nn = 40
-            n_pairsn = 1000000
+
         for dos in ["train/", "val/", "test/"]:
             if dos == "val" and n_pairsn > 100000:
                 n_pairsn = n_pairsn/10
