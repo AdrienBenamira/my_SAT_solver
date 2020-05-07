@@ -154,6 +154,7 @@ class DataGenerator(object):
 
         return n, iclauses, iclause_unsat, iclause_sat
 
+
     def parse_dimacs(self, filename):
         with open(filename, 'r') as f:
             lines = f.readlines()

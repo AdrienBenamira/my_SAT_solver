@@ -216,7 +216,7 @@ def lien_entre_couche_v16bits(D):
     return c
 
 
-def input_output_egalite(x, y, L, D):
+def input_output_egalite(x, y, L, D, last):
     """
 	numeros_SBOX : 1 a n
 	L : Largeur
@@ -237,20 +237,58 @@ def input_output_egalite(x, y, L, D):
         index_start = (numeros_SBOX - 1) * 8 + 5
         index_end = index_start + 4
         index_all_exit += [index_actu for index_actu in range(index_start, index_end)]
+
+    print("INDEX ENTRES: ", index_all_entry)
+    #print("INDEX SORTIES: ", index_all_exit)
+
     c=[]
     for index_x, xi in enumerate(x):
         if xi:
             c+=[[index_all_entry[index_x]]]
         else:
             c += [[-index_all_entry[index_x]]]
-    for index_y, yi in enumerate(y):
+    """for index_y, yi in enumerate(y):
         if yi:
             c+=[[index_all_exit[index_y]]]
         else:
-            c += [[-index_all_exit[index_y]]]
+            c += [[-index_all_exit[index_y]]]"""
+
+    #last permutation
+
+    index_all_entry_new = index_all_exit
+
+    index_all_exit_new = [last + 1 + k for k in range(len(index_all_entry_new))]
 
 
+    #print("INDEX ENTRES: ", index_all_entry_new)
+    print("INDEX SORTIES: ", index_all_exit_new)
+    print()
 
+
+    """ for index_x, xi in enumerate(x):
+        if xi:
+            c+=[[index_all_entry_new[index_x]]]
+        else:
+            c += [[-index_all_entry_new[index_x]]]
+    """
+
+    for index_y, yi in enumerate(y):
+        if yi:
+            c+=[[index_all_exit_new[index_y]]]
+        else:
+            c += [[-index_all_exit_new[index_y]]]
+
+    print("VARIABBLES PERMUTATIONS ENTREES: ", index_all_exit)
+    print("VARIABBLES PERMUTATIONS SORTIES:", index_all_exit_new)
+    print()
+
+    compteur = -1
+    for j in range(int(len(index_all_exit) / 4)):
+        for k in range(4):
+            compteur += 1
+            index_autre = j + k * 4
+            c += [[index_all_exit[compteur], index_all_exit_new[index_autre]]]
+            c += [[-index_all_exit[compteur], -index_all_exit_new[index_autre]]]
 
 
     return(c)
@@ -345,89 +383,115 @@ def urandom_from_random(rng, length):
 #-------------------------------------------------------------------------------------------------------------------
 #MAIN
 
-L = 2                               #largeur
+L = 4                               #largeur
 D = 2                              #Profondeur
-nr = D-1                            #Nbre de round
+nr = D                            #Nbre de round
 n = L * D                           #nbre totales de sbox
-tau = 1                            #Nbre max de Sbox active
+tau = 8                            #Nbre max de Sbox active
 
-assert tau < n + 1
+#assert tau < n + 1
 
-add_confition_input_output = False
+add_confition_input_output = True
+change_output_data = True
 
-nbre_sample_bin = np.random.randint(0, 2 ** L, np.random.randint(1, 16, 1))
-
-print(nbre_sample_bin)
 
 if not add_confition_input_output:
+    nbre_sample_bin = np.random.randint(0, 2 ** L, np.random.randint(1, 16, 1))
+    print()
     initialisation = []
     for nbre_sample_bin_u_index, nbre_sample_bin_u in enumerate(nbre_sample_bin):
         initialisation.append([nbre_sample_bin_u + 1])
-print(initialisation)
+    print("initialisation", initialisation)
 
-for nbre_sample_tau in range(1, n):
+#for nbre_sample_tau in range(1, n):
 
-    res_all = []
+res_all = []
 
 
-    for sbox in range(L * D):
-        res_all += une_sbox(sbox + 1, L, D)
-    res_all += compteur(L, D, nbre_sample_tau)
-    if D >1:
-        if L == 4:
-            res_all += lien_entre_couche_v16bits(D)
-        elif L ==2 and not add_confition_input_output:
-            res_all += lien_entre_couche_v8bits(D)
-        else:
-            print("error")
 
-    if add_confition_input_output:
-        ct0 = np.random.randint(0, 15, L)
-        key = np.random.randint(0, 15, L)
-        ct0_origin = ct0.copy()
-        ctc0 = Encrypt(ct0, key, nr);
-        ct0_bin = []
-        for i in range(4):
-            ct0_bin += [int(x) for x in list('{:04b}'.format(ct0_origin[i]))]
-        ctc0_bin = []
-        for i in range(4):
-            ctc0_bin += [int(x) for x in list('{:04b}'.format(ctc0[i]))]
-        res_all += input_output_egalite(ct0_bin, ctc0_bin, L, D)
+
+for sbox in range(L * D):
+    res_all += une_sbox(sbox + 1, L, D)
+res_all += compteur(L, D, tau)
+if D >1:
+    if L == 4:
+        res_all += lien_entre_couche_v16bits(D)
+    elif L ==2 and not add_confition_input_output:
+        res_all += lien_entre_couche_v8bits(D)
     else:
-        res_all += initialisation
+        print("error")
+
+if add_confition_input_output:
+    ct0 = np.random.randint(0, 15, L)
+    ct1 = np.random.randint(0, 15, L)
+    key = np.random.randint(0, 15, L)
+    ct0_origin = ct0.copy()
+    ct1_origin = ct1.copy()
+    ctc0 = Encrypt(ct0, key, nr);
+    ctc1 = Encrypt(ct1, key, nr);
+
+
+
+    print()
+
+    ct0_bin = []
+    for i in range(4):
+        ct0_bin += [int(x) for x in list('{:04b}'.format(ct0_origin[i]^ct1_origin[i]))]
+    ctc0_bin = []
+    for i in range(4):
+        ctc0_bin += [int(x) for x in list('{:04b}'.format(ctc0[i]^ctc1[i]))]
+
+    if change_output_data:
+        print(ctc0_bin)
+        #for cici_index, cici_value in enumerate(ctc0_bin):
+        ctc0_bin[6] = (ctc0_bin[6]+1) % 2
+        print(ctc0_bin)
 
 
     max_all = [max(cluase) for cluase in res_all]
+    mmin_all = [-min(cluase) for cluase in res_all]
+    max2_all = max(max_all, mmin_all)
 
-    print("NBRE DE CLAUSES: ", len(res_all))
-    print("NBRE DE VARIABLES: ", max(max_all))
-    n_vars = max(max_all)
-    print("RATIO : ", len(res_all) / max(max_all))
+    res_all += input_output_egalite(ct0_bin, ctc0_bin, L, D, max(max2_all))
+else:
+    res_all += initialisation
+
+max_all = [max(cluase) for cluase in res_all]
+mmin_all = [-min(cluase) for cluase in res_all]
+max2_all = max(max_all, mmin_all)
+
+print("NBRE DE CLAUSES: ", len(res_all))
+print("NBRE DE VARIABLES: ", max(max2_all))
+n_vars = max(max2_all)
+print("RATIO : ", len(res_all) / max(max2_all))
+if add_confition_input_output:
+    print("ENTREES : ", ctc0 ^ ctc1, ct0_origin ^ ct1_origin)
 
 
-    import PyMiniSolvers.minisolvers as minisolvers
-    solver = minisolvers.MinisatSolver()
-    for i in range(max(max_all)): solver.new_var(dvar=True)
-    for iclause in res_all:
-        solver.add_clause(iclause)
+import PyMiniSolvers.minisolvers as minisolvers
+solver = minisolvers.MinisatSolver()
+for i in range(max(max2_all)): solver.new_var(dvar=True)
+for iclause in res_all:
+    solver.add_clause(iclause)
 
-    is_sat = solver.solve()
-    print("IS THE PROBLEM SAT ? ", is_sat)
-    if is_sat:
-        print()
-        print(list(solver.get_model()))
+is_sat = solver.solve()
+print("IS THE PROBLEM SAT ? ", is_sat)
+if is_sat:
+    print()
+    print(list(solver.get_model()))
 
 
-    def write_dimacs_to(n_vars, res_all, out_filename):
-        with open(out_filename, 'w') as f:
-            f.write("p cnf %d %d\n" % (n_vars, len(res_all)))
-            for c in res_all:
-                for x in c:
-                    f.write("%d " % x)
-                f.write("0\n")
+"""
+def write_dimacs_to(n_vars, res_all, out_filename):
+    with open(out_filename, 'w') as f:
+        f.write("p cnf %d %d\n" % (n_vars, len(res_all)))
+        for c in res_all:
+            for x in c:
+                f.write("%d " % x)
+            f.write("0\n")
 
-    out_filename = "data/test_dimacs/test_"+str(nbre_sample_tau)+".txt"
-    write_dimacs_to(n_vars, res_all, out_filename)
+out_filename = "data/test_dimacs/test_"+str(nbre_sample_tau)+".txt"
+write_dimacs_to(n_vars, res_all, out_filename)
 
 parser = argparse.ArgumentParser()
 
@@ -517,3 +581,4 @@ dataset_filename = dg.mk_dataset_filename(dg.config, len(batches))
 print("Writing %d batches to %s...\n" % (len(batches), dataset_filename))
 with open(dataset_filename, 'wb') as f_dump:
     pickle.dump(batches, f_dump)
+"""
