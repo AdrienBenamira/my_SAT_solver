@@ -607,10 +607,10 @@ D = 2  # Profondeur
 tau = 5  # Nbre max de Sbox active 5, 6, 7
 print_logs = False
 check_verif = False
-repeat1 = 2 ** 10
-repeat2 = 2 ** 10
+repeat1 = 2 ** 12
+repeat2 = 2 ** 12
 
-for tau in [5, 6, 7]:
+for tau in [5]:
     sat_gen = SAT_pb_generator_miniGIFT( L, D, tau, minisolvers, repeat1, repeat2, print_logs = print_logs, check_verif = check_verif)
     start = time.time()
     dico_res = sat_gen.main_general_1()
