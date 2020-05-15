@@ -1,6 +1,8 @@
+from typing import Union
+
+from numpy.core._multiarray_umath import ndarray
 from tqdm import tqdm
 
-from utils.config import Config
 import numpy as np
 import PyMiniSolvers.minisolvers as minisolvers
 
@@ -553,8 +555,9 @@ class SAT_pb_generator_miniGIFT(object):
                                 self.dico_res[self.tau_ici][compteur_sat2]["inputs_int"] = [(ct0_init.copy(), ct1_init)]
                                 self.dico_res[self.tau_ici][compteur_sat2]["outputs_int"] = [(self.ct0_final.copy(), self.ct1_final.copy())]
 
-                                """self.dico_res[self.tau_ici][compteur_sat2]["delta_inputs_bin"] = self.ct_bin
+                                self.dico_res[self.tau_ici][compteur_sat2]["delta_inputs_bin"] = self.ct_bin
                                 self.dico_res[self.tau_ici][compteur_sat2]["delta_outputs_bin"] = self.ct_bin_final
+                                """"
                                 self.dico_res[self.tau_ici][compteur_sat2]["solution_SBOX_active"] = [self.solution[v - 1] for v in self.dico_entree_sortie["sbox"]]
                                 self.dico_res[self.tau_ici][compteur_sat2]["solution_entrees1"] = [self.solution[v - 1] for v in self.INDEX_ENTRES]
                                 self.dico_res[self.tau_ici][compteur_sat2]["solution_sortie1"] = [self.solution[v - 1] for v in self.VARIABBLES_PERMUTATIONS_ENTREES_1]
@@ -607,8 +610,13 @@ D = 2  # Profondeur
 tau = 5  # Nbre max de Sbox active 5, 6, 7
 print_logs = False
 check_verif = False
-repeat1 = 2 ** 12
-repeat2 = 2 ** 12
+repeat1 = 2 ** 10
+repeat2 = 2 ** 10
+
+X_all = []
+Y_all = []
+
+
 
 for tau in [7]:
     sat_gen = SAT_pb_generator_miniGIFT( L, D, tau, minisolvers, repeat1, repeat2, print_logs = print_logs, check_verif = check_verif)
@@ -640,19 +648,32 @@ for tau in [7]:
         flag_continue = True
 
         for index_key2, key2 in enumerate(list_key):
-            if key2 !=key:
+            list_key_index_random = np.random.randint(0, len(list_key), len(list_key))
+            key3 = list_key[list_key_index_random[index_key2]]
+            if key3 !=key:
                 if flag_continue:
-                    ct0_fin = dico_res[tau][key2]["outputs_int"][0][0]
-                    ct1_fin = dico_res[tau][key2]["outputs_int"][0][1]
+
+                    ct0_fin = dico_res[tau][key3]["outputs_int"][0][0]
+                    ct1_fin = dico_res[tau][key3]["outputs_int"][0][1]
                     #if ((ct0_fin, ct1_fin) not in dico_res[tau][key]["outputs_int"]):
                     sat_gen.main_step2_bis(ct0_init3.copy(), ct1_init.copy(), ct0_fin.copy(), ct1_fin.copy())
                     if not sat_gen.is_sat:
-                        new_key = str(ct0_init3.copy() + ct1_init.copy() + ct0_fin.copy() + ct1_fin.copy())
+                        new_key = str(ct0_init3.copy().tolist() + ct1_init.copy().tolist() + ct0_fin.copy().tolist() + ct1_fin.copy().tolist())
                         if new_key not in dico_res_unsat[tau].keys():
                             cpteur += 1
                             dico_res_unsat[tau][new_key] = {}
                             namesat = "./data/mini_GIFT/" + str(tau) + "_" + str(cpteur) + "_dico_res_UNSAT.DIMACS"
                             write_dimacs_to(sat_gen.nbre_var, sat_gen.res_all, namesat)
+
+                            X_ici1 = dico_res[tau][key]["delta_inputs_bin"]+ dico_res[tau][key]["delta_outputs_bin"]
+                            X_all.append(np.array(X_ici1))
+                            Y_all.append(1)
+                            X_ici2 =  dico_res[tau][key3]["delta_inputs_bin"] + dico_res[tau][key3]["delta_outputs_bin"]
+                            X_all.append(np.array(X_ici2))
+                            Y_all.append(0)
+
+
+
                             if cpteur == index_key+2:
                                 flag_continue = False
 
@@ -661,8 +682,82 @@ for tau in [7]:
     print()
     print("NB DE PB UNSAT AVEC TAU", tau, cpteur )
 
-
-
-
     del sat_gen, dico_res_unsat, dico_res
 
+X_all = np.array(X_all)
+Y_all = np.array(Y_all)
+
+print(X_all.shape)
+print(Y_all.shape)
+
+
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score
+from sklearn.model_selection import train_test_split
+
+X_train, X_test, y_train, y_test = train_test_split(X_all, Y_all, random_state=42)
+
+rfc = RandomForestClassifier(n_estimators=10, random_state=42)
+rfc.fit(X_train, y_train)
+clf_probs = rfc.predict(X_test)
+
+score = accuracy_score(y_test, clf_probs)
+
+print("ACC", score)
+index_interet = (clf_probs >0.5) == y_test
+index_interet2 = (clf_probs >0.5) != y_test
+
+
+
+
+Xint1 = np.sum(X_test[index_interet][:,:16], axis=1)
+Xint2 = np.sum(X_test[index_interet][:,16:], axis=1)
+
+SBOX11 = np.sum(X_test[index_interet][:,:4], axis=1)
+SBOX12 = np.sum(X_test[index_interet][:,4:8], axis=1)
+SBOX13 = np.sum(X_test[index_interet][:,8:12], axis=1)
+SBOX14 = np.sum(X_test[index_interet][:,12:16], axis=1)
+SBOX21 = np.sum(X_test[index_interet][:,16:20], axis=1)
+SBOX22 = np.sum(X_test[index_interet][:,20:24], axis=1)
+SBOX23 = np.sum(X_test[index_interet][:,24:28], axis=1)
+SBOX24 = np.sum(X_test[index_interet][:,28:], axis=1)
+
+print()
+print("NBRE DE BITS A 1 ENTRES SORTIES que RFarrive clasifier")
+print()
+print("INPUTS")
+print(Xint1)
+print("INPUTS SBOX")
+print(SBOX11, SBOX12, SBOX13, SBOX14)
+print()
+print("OUTPUTS")
+print(Xint2)
+print("INPUTS SBOX")
+print(int(np.sum(SBOX21)>0) + int(np.sum(SBOX22)>0) + int(np.sum(SBOX23)>0) + int(np.sum(SBOX24)>0))
+
+
+
+
+
+Xint1 = np.sum(X_test[index_interet2][:,:16], axis=1)
+Xint2 = np.sum(X_test[index_interet2][:,16:], axis=1)
+SBOX11 = np.sum(X_test[index_interet2][:,:4], axis=1)
+SBOX12 = np.sum(X_test[index_interet2][:,4:8], axis=1)
+SBOX13 = np.sum(X_test[index_interet2][:,8:12], axis=1)
+SBOX14 = np.sum(X_test[index_interet2][:,12:16], axis=1)
+SBOX21 = np.sum(X_test[index_interet2][:,16:20], axis=1)
+SBOX22 = np.sum(X_test[index_interet2][:,20:24], axis=1)
+SBOX23 = np.sum(X_test[index_interet2][:,24:28], axis=1)
+SBOX24 = np.sum(X_test[index_interet2][:,28:], axis=1)
+print()
+print("NBRE DE BITS A 1 ENTRES SORTIES que RF n'arrive pas a clasifier")
+print()
+print("INPUTS")
+print(Xint1)
+print("INPUTS SBOX")
+print(SBOX11, SBOX12, SBOX13, SBOX14)
+print()
+print("OUTPUTS")
+print(Xint2)
+print("OUTPUTS SBOX")
+print(SBOX21, SBOX22, SBOX23, SBOX24)

@@ -19,7 +19,7 @@ generate_data:
   n_pairs: 100 # nombre de données de train
   min_n: 3 #loi uniforme pour le nombre de varible : nombre min
   max_n: 5 #loi uniforme pour le nombre de varible : nombre min
-  max_nodes_per_batch: 12000 #We batched multiple problems together,
+  max_nodes_per_batch: 1200 #We batched multiple problems together,
                             #with each batch containingup to XXX nodes (i.e.literals plus clauses)
   one: 0 # ?
   p_k_2: 0.7 # parametre pour loi bernouilli selon rmq 2 partie 4 (1-0.7 = 0.3)

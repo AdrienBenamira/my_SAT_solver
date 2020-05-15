@@ -83,6 +83,7 @@ class Problem(object):
 class ProblemsLoader(object):
     def __init__(self, filenames):
         self.filenames = filenames
+        print(filenames)
 
         self.next_file_num = 0
         assert(self.has_next())
@@ -216,7 +217,7 @@ class DataGenerator(object):
 
 
     def run_main(self):
-
+        """
         for pair in range(self.config.n_pairs):
             n_vars, iclauses, iclause_unsat, iclause_sat = self.gen_iclause_pair(self.config)
             out_filenames = self.mk_out_filenames(self.config, n_vars, pair)
@@ -227,6 +228,7 @@ class DataGenerator(object):
             iclauses[-1] = iclause_sat
             self.write_dimacs_to(n_vars, iclauses, out_filenames[1])
 
+        """
         problems = []
         batches = []
         n_nodes_in_batch = 0
@@ -239,7 +241,7 @@ class DataGenerator(object):
         prev_n_vars = None
 
         for filename in filenames:
-            #print(filename)
+            print(filename)
             n_vars, iclauses = self.parse_dimacs("%s/%s" % (self.config.dimacs_dir, filename))
             n_clauses = len(iclauses)
             n_cells = sum([len(iclause) for iclause in iclauses])
