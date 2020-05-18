@@ -38,6 +38,7 @@ import pickle
 import numpy as np
 import math
 
+from tqdm import tqdm
 
 
 class Problem(object):
@@ -240,8 +241,8 @@ class DataGenerator(object):
 
         prev_n_vars = None
 
-        for filename in filenames:
-            print(filename)
+        for filename in tqdm(filenames):
+            #print(filename)
             n_vars, iclauses = self.parse_dimacs("%s/%s" % (self.config.dimacs_dir, filename))
             n_clauses = len(iclauses)
             n_cells = sum([len(iclause) for iclause in iclauses])
@@ -260,7 +261,7 @@ class DataGenerator(object):
 
             if batch_ready:
                 batches.append(self.mk_batch_problem(problems))
-                print("batch %d done (%d vars, %d problems)...\n" % (len(batches), prev_n_vars, len(problems)))
+                #print("batch %d done (%d vars, %d problems)...\n" % (len(batches), prev_n_vars, len(problems)))
                 del problems[:]
                 n_nodes_in_batch = 0
 
