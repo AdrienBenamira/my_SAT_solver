@@ -262,7 +262,7 @@ class DataGenerator(object):
 
             if batch_ready:
                 batches.append(self.mk_batch_problem(problems))
-                cpt = + 1
+                cpt += 1
                 #print("batch %d done (%d vars, %d problems)...\n" % (len(batches), prev_n_vars, len(problems)))
                 del problems[:]
                 n_nodes_in_batch = 0
