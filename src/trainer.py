@@ -34,33 +34,34 @@ def train_model(path, writer, model, dataloaders, criterion, optimizer, device, 
             running_loss = 0.0
             nbre_sample = 0
             TP, TN, FN, FP = torch.zeros(1).long(), torch.zeros(1).long(), torch.zeros(1).long(), torch.zeros(1).long()
-            train_problems, train_filename = dataloaders[phase].get_next()
-            train_bar = tqdm(train_problems[:index_max])
-            for index_pb, problem in enumerate(train_bar):
-                n_batches = len(problem.is_sat)
-                optimizer.zero_grad()
-                with torch.set_grad_enabled(phase == 'train'):
-                    outputs = model(problem, phase)
-                    target = torch.Tensor(problem.is_sat).float().to(model.L_init.weight.device)
-                    outputs = sigmoid(outputs)
-                    loss = criterion(outputs, target)
-                    desc = 'loss: %.4f; ' % (loss.item())
-                    if phase == 'train':
-                        loss.backward()
-                        torch.nn.utils.clip_grad_norm_(model.parameters(), 0.65)
-                        optimizer.step()
-                    preds = torch.where(outputs > 0.5, torch.ones(outputs.shape).to(device), torch.zeros(outputs.shape).to(device))
-                    TP += (preds.eq(1) & target.eq(1)).cpu().sum()
-                    TN += (preds.eq(0) & target.eq(0)).cpu().sum()
-                    FN += (preds.eq(0) & target.eq(1)).cpu().sum()
-                    FP += (preds.eq(1) & target.eq(0)).cpu().sum()
-                    TOT = TP + TN + FN + FP
-                    desc += 'acc: %.3f, TP: %.3f, TN: %.3f, FN: %.3f, FP: %.3f' % (
-                    (TP.item() + TN.item()) * 1.0 / TOT.item(), TP.item() * 1.0 / TOT.item(),
-                    TN.item() * 1.0 / TOT.item(), FN.item() * 1.0 / TOT.item(), FP.item() * 1.0 / TOT.item())
-                    running_loss += loss.item() * n_batches
-                    nbre_sample += n_batches
-
+            while dataloaders[phase].has_next():
+                train_problems, train_filename = dataloaders[phase].get_next()
+                train_bar = tqdm(train_problems[:index_max])
+                for index_pb, problem in enumerate(train_bar):
+                    n_batches = len(problem.is_sat)
+                    optimizer.zero_grad()
+                    with torch.set_grad_enabled(phase == 'train'):
+                        outputs = model(problem, phase)
+                        target = torch.Tensor(problem.is_sat).float().to(model.L_init.weight.device)
+                        outputs = sigmoid(outputs)
+                        loss = criterion(outputs, target)
+                        desc = 'loss: %.4f; ' % (loss.item())
+                        if phase == 'train':
+                            loss.backward()
+                            torch.nn.utils.clip_grad_norm_(model.parameters(), 0.65)
+                            optimizer.step()
+                        preds = torch.where(outputs > 0.5, torch.ones(outputs.shape).to(device), torch.zeros(outputs.shape).to(device))
+                        TP += (preds.eq(1) & target.eq(1)).cpu().sum()
+                        TN += (preds.eq(0) & target.eq(0)).cpu().sum()
+                        FN += (preds.eq(0) & target.eq(1)).cpu().sum()
+                        FP += (preds.eq(1) & target.eq(0)).cpu().sum()
+                        TOT = TP + TN + FN + FP
+                        desc += 'acc: %.3f, TP: %.3f, TN: %.3f, FN: %.3f, FP: %.3f' % (
+                        (TP.item() + TN.item()) * 1.0 / TOT.item(), TP.item() * 1.0 / TOT.item(),
+                        TN.item() * 1.0 / TOT.item(), FN.item() * 1.0 / TOT.item(), FP.item() * 1.0 / TOT.item())
+                        running_loss += loss.item() * n_batches
+                        nbre_sample += n_batches
+            dataloaders[phase].next_file_num = 0
             epoch_loss = running_loss / nbre_sample
             acc = (TP.item() + TN.item()) * 1.0 / TOT.item()
             print('{} Loss: {:.4f}'.format(

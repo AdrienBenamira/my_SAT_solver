@@ -233,6 +233,7 @@ class DataGenerator(object):
         problems = []
         batches = []
         n_nodes_in_batch = 0
+        cpt = 0
 
         filenames = os.listdir(self.config.dimacs_dir)
 
@@ -261,9 +262,21 @@ class DataGenerator(object):
 
             if batch_ready:
                 batches.append(self.mk_batch_problem(problems))
+                cpt = + 1
                 #print("batch %d done (%d vars, %d problems)...\n" % (len(batches), prev_n_vars, len(problems)))
                 del problems[:]
                 n_nodes_in_batch = 0
+
+                if not os.path.exists(self.config.out_dir):
+                    os.mkdir(self.config.out_dir)
+
+                if len(batches) ==self.config.max_batch:
+                    dataset_filename = self.mk_dataset_filename(self.config, len(batches) + cpt)
+                    print("Writing %d batches to %s...\n" % (len(batches)+ cpt, dataset_filename))
+                    with open(dataset_filename, 'wb') as f_dump:
+                        pickle.dump(batches, f_dump)
+
+                    batches = []
 
             prev_n_vars = n_vars
 
@@ -272,6 +285,9 @@ class DataGenerator(object):
 
             problems.append((filename, n_vars, iclauses, is_sat))
             n_nodes_in_batch += n_nodes
+
+
+
 
         if len(problems) > 0:
             batches.append(self.mk_batch_problem(problems))
@@ -282,7 +298,7 @@ class DataGenerator(object):
         if not os.path.exists(self.config.out_dir):
             os.mkdir(self.config.out_dir)
 
-        dataset_filename = self.mk_dataset_filename(self.config, len(batches))
-        print("Writing %d batches to %s...\n" % (len(batches), dataset_filename))
+        dataset_filename = self.mk_dataset_filename(self.config, len(batches)+ cpt)
+        print("Writing %d batches to %s...\n" % (len(batches)+ cpt, dataset_filename))
         with open(dataset_filename, 'wb') as f_dump:
             pickle.dump(batches, f_dump)

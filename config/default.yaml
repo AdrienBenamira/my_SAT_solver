@@ -5,8 +5,8 @@ general:
   nbre_plot: 2
 
 path:
-  dimacs_dir: ./data/dataset_10000p/10_40/train/dimacs
-  out_dir: ./data/dataset_10000p/10_40/train/pickle
+  dimacs_dir: ./data/little_dataset_100p/10_40/train/dimacs
+  out_dir: ./data/little_dataset_100p/10_40/train/pickle
   train_dir: ./data/little_dataset_100p/10_40/train/pickle
   val_dir: ./data/little_dataset_100p/10_40/val/pickle
   test_dir: ./data/little_dataset_100p/10_40/val/pickle
@@ -24,6 +24,7 @@ generate_data:
   one: 0 # ?
   p_k_2: 0.7 # parametre pour loi bernouilli selon rmq 2 partie 4 (1-0.7 = 0.3)
   p_geo: 0.4 # parametre pour loi geometric selon rmq 2 partie 4
+  max_batch: 1000
 
 training:
   n_epochs: 15

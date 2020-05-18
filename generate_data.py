@@ -32,6 +32,8 @@ parser.add_argument("--max_nodes_per_batch", default=config.generate_data.max_no
 parser.add_argument("--one", default=config.generate_data.one, type=two_args_str_int)
 parser.add_argument("--p_k_2", default=config.generate_data.p_k_2, type=two_args_str_int)
 parser.add_argument("--p_geo", default=config.generate_data.p_geo, type=two_args_str_int)
+parser.add_argument("--max_batch", default=config.generate_data.max_batch, type=two_args_str_int)
+
 
 parser.add_argument("--dimacs_dir", default=config.path.dimacs_dir)
 parser.add_argument("--out_dir", default=config.path.out_dir)
