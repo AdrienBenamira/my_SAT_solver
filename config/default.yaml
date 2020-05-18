@@ -5,8 +5,8 @@ general:
   nbre_plot: 2
 
 path:
-  dimacs_dir: ./data/dataset_10000p/3_5/train/dimacs
-  out_dir: ./data/dataset_10000p/3_5/train/pickle
+  dimacs_dir: ./data/dataset_10000p/10_40/train/dimacs
+  out_dir: ./data/dataset_10000p/10_40/train/pickle
   train_dir: ./data/dataset_10000p/10_40/train/pickle
   val_dir: ./data/dataset_10000p/10_40/val/pickle
   test_dir: ./data/dataset_10000p/10_40/val/pickle
