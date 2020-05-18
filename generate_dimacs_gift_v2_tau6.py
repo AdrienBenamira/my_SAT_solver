@@ -1,6 +1,5 @@
 from typing import Union
 
-from numpy.core._multiarray_umath import ndarray
 from tqdm import tqdm
 
 import numpy as np
