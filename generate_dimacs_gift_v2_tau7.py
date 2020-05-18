@@ -610,8 +610,8 @@ D = 2  # Profondeur
 tau = 5  # Nbre max de Sbox active 5, 6, 7
 print_logs = False
 check_verif = False
-repeat1 = 2 ** 10
-repeat2 = 2 ** 10
+repeat1 = 2 ** 8
+repeat2 = 2 ** 8
 
 X_all = []
 Y_all = []
