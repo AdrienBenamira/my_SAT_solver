@@ -5,9 +5,9 @@ general:
   nbre_plot: 2
 
 path:
-  dimacs_dir: ./data/little_dataset_100p/10_40/train/dimacs
-  out_dir: ./data/little_dataset_100p/10_40/train/pickle
-  train_dir: ./data/little_dataset_100p/10_40/train/pickle
+  dimacs_dir: ./data/dataset_10000p/10_40/train/dimacs
+  out_dir: ./data/dataset_10000p/10_40/train/pickle
+  train_dir: ./data/dataset_10000p/10_40/train/pickle
   val_dir: ./data/little_dataset_100p/10_40/val/pickle
   test_dir: ./data/little_dataset_100p/10_40/val/pickle
   logs_tensorboard : ./runs/test_1
@@ -27,7 +27,7 @@ generate_data:
   max_batch: 1000
 
 training:
-  n_epochs: 15
+  n_epochs: 200
   embbeding_dim: 128
   T : 26
   weight_decay: 0.0000000001
